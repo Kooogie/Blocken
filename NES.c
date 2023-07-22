@@ -107,12 +107,6 @@ int main(void) {
 			PPU_MASK = 0x18;
 			STORED_INT_COMPARE2 = LOOP3_MOST;
 		}
-
-		PPU_MASK = 0x0;
-		PPU_ADDR = 0x0;
-		PPU_ADDR = 0x0;
-		PPU_DATA = 0x0;
-		PPU_MASK = 0x18;
 	}
 
 	return 0;
