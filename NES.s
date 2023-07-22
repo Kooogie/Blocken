@@ -23,10 +23,8 @@
 .segment	"CODE"
 
 	lda     #$01
-	sta     $0014
-	sta     $0016
-	lda     #$09
-	sta     $0003
+	sta     $0011
+	sta     $0013
 	lda     #$3F
 	sta     $2006
 	lda     #$00
@@ -41,37 +39,56 @@
 	sta     $2007
 	lda     #$18
 	sta     $2001
-L0009:	lda     $0004
+L000D:	lda     $0002
 	lsr     a
 	lsr     a
 	lsr     a
 	lsr     a
 	and     #$0F
-	sta     $0005
-	lda     $0004
+	sta     $0003
+	lda     $0002
 	and     #$0F
-	sta     $0006
+	sta     $0004
 	inc     $0000
 	lda     $0000
 	cmp     #$FF
-	bne     L000A
+	bne     L000E
 	inc     $0001
-L000A:	lda     $0001
+L000E:	lda     $0001
 	cmp     #$40
-	bne     L000B
-	inc     $0004
+	bne     L000F
+	inc     $0002
 	lda     #$00
 	sta     $0001
-L000B:	lda     $0014
-	cmp     $0006
-	beq     L000C
+L000F:	lda     #$01
+	sta     $4016
+	lda     #$00
+	sta     $4016
+	sta     M0001
+L0010:	lda     M0001
+	cmp     #$08
+	beq     L0011
+	lda     $4016
+	and     #$01
+	sta     $0014
+	lda     $0015
+	asl     a
+	sta     $0015
+	lda     $0014
+	ora     $0015
+	sta     $0015
+	inc     M0001
+	jmp     L0010
+L0011:	lda     $0011
+	cmp     $0004
+	beq     L0012
 	lda     #$00
 	sta     $2001
 	lda     #$20
 	sta     $2006
 	lda     #$C4
 	sta     $2006
-	lda     $0006
+	lda     $0004
 	sta     $2007
 	lda     #$20
 	sta     $2006
@@ -81,18 +98,18 @@ L000B:	lda     $0014
 	sta     $2007
 	lda     #$18
 	sta     $2001
-	lda     $0006
-	sta     $0014
-L000C:	lda     $0016
-	cmp     $0005
-	beq     L0009
+	lda     $0004
+	sta     $0011
+L0012:	lda     $0013
+	cmp     $0003
+	jeq     L000D
 	lda     #$00
 	sta     $2001
 	lda     #$20
 	sta     $2006
 	lda     #$C3
 	sta     $2006
-	lda     $0005
+	lda     $0003
 	sta     $2007
 	lda     #$20
 	sta     $2006
@@ -102,9 +119,9 @@ L000C:	lda     $0016
 	sta     $2007
 	lda     #$18
 	sta     $2001
-	lda     $0005
-	sta     $0016
-	jmp     L0009
+	lda     $0003
+	sta     $0013
+	jmp     L000D
 
 .segment	"BSS"
 

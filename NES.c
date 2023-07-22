@@ -1,45 +1,44 @@
 #include <6502.h>
 
 
-// CPU Custom Memory Addresses
-#define LOOP1 (*(volatile unsigned char*)0x00) // Can be used for the beginning before the while loop
-#define LOOP2 (*(volatile unsigned char*)0x01)
-#define LOOP2_MOST (*(volatile unsigned char*)0x02)
-#define LOOP2_COMPARE (*(volatile unsigned char*)0x03)
-#define LOOP3 (*(volatile unsigned char*)0x04)
-#define LOOP3_MOST (*(volatile unsigned char*)0x05)
-#define LOOP3_LEAST (*(volatile unsigned char*)0x06)
-#define CTRL_STORE (*(volatile unsigned char*)0x10)
-#define CTRL_STORE_BUFFER (*(volatile unsigned char*)0x11)
-#define CTRL_PRESSED (*(volatile unsigned char*)0x12)
-#define STORED_INT (*(volatile unsigned char*)0x13)
-#define STORED_INT_COMPARE (*(volatile unsigned char*)0x14)
-#define STORED_INT2 (*(volatile unsigned char*)0x15)
-#define STORED_INT_COMPARE2 (*(volatile unsigned char*)0x16)
+// CPU Custom Memory Addresses, Hints for where values should be stored at to save up on performance
+#define LOOP1			(*(volatile unsigned char*)0x00)
+#define LOOP2			(*(volatile unsigned char*)0x01)
+#define LOOP3			(*(volatile unsigned char*)0x02)
+#define LOOP3_MOST		(*(volatile unsigned char*)0x03)
+#define LOOP3_LEAST		(*(volatile unsigned char*)0x04)
+
+#define STORED_INT			(*(volatile unsigned char*)0x10)
+#define STORED_INT_COMPARE	(*(volatile unsigned char*)0x11)
+#define STORED_INT2			(*(volatile unsigned char*)0x12)
+#define STORED_INT_COMPARE2 (*(volatile unsigned char*)0x13)
+
+#define CTRL_STORE_BUFFER	(*(volatile unsigned char*)0x14)
+#define CTRL_STORE			(*(volatile unsigned char*)0x15)
 
 
 // CPU Memory Addresses
-#define PPU_MASK (*(volatile unsigned char*)0x2001)
-#define PPU_STATUS (*(volatile unsigned char*)0x2002)
+#define PPU_MASK		(*(volatile unsigned char*)0x2001)
+#define PPU_STATUS		(*(volatile unsigned char*)0x2002)
 #define PPU_STATUS_MOST (*(volatile unsigned char*)0x17)
-#define OAM_ADDR (*(volatile unsigned char*)0x2003)
-#define OAM_DATA (*(volatile unsigned char*)0x2004)
-#define PPU_ADDR (*(volatile unsigned char*)0x2006)
-#define PPU_DATA (*(volatile unsigned char*)0x2007)
-#define SPRITE_DMA (*(volatile unsigned char*)0x4014)
-#define CTRL1 (*(volatile unsigned char*)0x4016)
+#define OAM_ADDR		(*(volatile unsigned char*)0x2003)
+#define OAM_DATA		(*(volatile unsigned char*)0x2004)
+#define PPU_ADDR		(*(volatile unsigned char*)0x2006)
+#define PPU_DATA		(*(volatile unsigned char*)0x2007)
+#define SPRITE_DMA		(*(volatile unsigned char*)0x4014)
+#define CTRL1			(*(volatile unsigned char*)0x4016)
 
 // PPU Memory Addresses
-#define PATTERN_TABLE0 = 0x00 // $0000 - $0FFF | $1000 Bytes
-#define PATTERN_TABLE1 = 0x10 // $1000 - $1FFF | $1000 Bytes
-#define NAMETABLE0 = 0x20 // $2000 - $23FF | $0400 Bytes
-#define NAMETABLE0_PALETTE = 0x23C0 // $23C0 - $23FF
-#define NAMETABLE1 = 0x24 // $2400 - $27FF | $0400 Bytes
-#define NAMETABLE2 = 0x28 // $2800 - $2BFF | $0400 Bytes
-#define NAMETABLE3 = 0x2C // $2C00 - $2FFF | $0400 Bytes
-#define MIRRORS_2000_2EFF = 0x30 // $3000 - $3EFF | $0F00 Bytes
-#define PALETTE_ADDR = 0x3F // $3F00 - $3F1F | $0020 Bytes
-#define MIRRORS_3F00_3F1F = 0x3F // $3F20 - $3FFF | $00E0 Bytes
+	//PATTERN_TABLE0		$0000 - $0FFF | $1000 Bytes
+	//PATTERN_TABLE1		$1000 - $1FFF | $1000 Bytes
+	//NAMETABLE0			$2000 - $23FF | $0400 Bytes
+	//NAMETABLE0_PALETTE	$23C0 - $23FF | $0030 Bytes
+	//NAMETABLE1			$2400 - $27FF | $0400 Bytes
+	//NAMETABLE2			$2800 - $2BFF | $0400 Bytes
+	//NAMETABLE3			$2C00 - $2FFF | $0400 Bytes
+	//MIRRORS				$3000 - $3EFF | $0F00 Bytes
+	//PALETTE_ADDR			$3F00 - $3F1F | $0020 Bytes
+	//MIRRORS				$3F20 - $3FFF | $00E0 Bytes
 
 // A :		10000000
 // B :		01000000
@@ -55,7 +54,6 @@ int main(void) {
 	struct regs r;
 	STORED_INT_COMPARE = 0x01;
 	STORED_INT_COMPARE2 = 0x01;
-	LOOP2_COMPARE = 0x09;
 
 	// Begin changing the background color
 	PPU_ADDR = 0x3F;
@@ -84,6 +82,16 @@ int main(void) {
 			LOOP2 = 0x00;
 		}
 
+		// Get controller input
+		CTRL1 = 0x01;
+		CTRL1 = 0x00;
+		for (r.a = 0; r.a != 8; r.a++) {
+			CTRL_STORE_BUFFER = (CTRL1 & 0x1);
+			CTRL_STORE = (CTRL_STORE << 1);
+			CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER;
+		}
+
+		// Update graphical counters
 		if (STORED_INT_COMPARE != LOOP3_LEAST) { // 0xX0
 			PPU_MASK = 0x00;
 			PPU_ADDR = 0x20;
@@ -111,14 +119,3 @@ int main(void) {
 
 	return 0;
 }
-
-//void GetButtonPress() {
-//	struct regs r;
-//	CTRL1 = 0x01;
-//	CTRL1 = 0x00;
-//	for (r.a = 0; r.a != 8; r.a++) {
-//		CTRL_STORE_BUFFER = (CTRL1 & 0x1);
-//		CTRL_STORE = (CTRL_STORE << 1);
-//		CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER;
-//	}
-//}
