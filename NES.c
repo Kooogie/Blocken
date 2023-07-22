@@ -7,6 +7,8 @@
 #define LOOP2_MOST (*(volatile unsigned char*)0x02)
 #define LOOP2_COMPARE (*(volatile unsigned char*)0x03)
 #define LOOP3 (*(volatile unsigned char*)0x04)
+#define LOOP3_MOST (*(volatile unsigned char*)0x05)
+#define LOOP3_LEAST (*(volatile unsigned char*)0x06)
 #define CTRL_STORE (*(volatile unsigned char*)0x10)
 #define CTRL_STORE_BUFFER (*(volatile unsigned char*)0x11)
 #define CTRL_PRESSED (*(volatile unsigned char*)0x12)
@@ -48,48 +50,12 @@
 // Left :	00000010
 // Right :	00000001
 
-void GetButtonPress() {
-	struct regs r;
-	CTRL1 = 0x01;
-	CTRL1 = 0x00;
-	for (r.a = 0; r.a != 8; r.a++) {
-		CTRL_STORE_BUFFER = (CTRL1 & 0x1);
-		CTRL_STORE = (CTRL_STORE << 1);
-		CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER;
-	}
-}
-
-void UpdateVisualCounters () {
-	if (STORED_INT_COMPARE != STORED_INT) { // 0xX0
-		PPU_MASK = 0x00;
-		PPU_ADDR = 0x20;
-		PPU_ADDR = 0xC4;
-		PPU_DATA = STORED_INT;
-		PPU_ADDR = 0x20;
-		PPU_ADDR = 0x00;
-		PPU_DATA = 0x00;
-		PPU_MASK = 0x18;
-		STORED_INT_COMPARE = STORED_INT;
-	}
-
-	if (STORED_INT_COMPARE2 != STORED_INT2) { // 0x0X
-		PPU_MASK = 0x00;
-		PPU_ADDR = 0x20;
-		PPU_ADDR = 0xC3;
-		PPU_DATA = STORED_INT2;
-		PPU_ADDR = 0x20;
-		PPU_ADDR = 0x00;
-		PPU_DATA = 0x00;
-		PPU_MASK = 0x18;
-		STORED_INT_COMPARE2 = STORED_INT2;
-	}
-}
 
 int main(void) {
 	struct regs r;
 	STORED_INT_COMPARE = 0x01;
 	STORED_INT_COMPARE2 = 0x01;
-	LOOP2_COMPARE = 0x09; // Set to 9 to stop visual glitch on the first run
+	LOOP2_COMPARE = 0x09;
 
 	// Begin changing the background color
 	PPU_ADDR = 0x3F;
@@ -102,28 +68,12 @@ int main(void) {
 
 	// Show sprites and background
 	PPU_MASK = 0x18;
-
-	while (LOOP1 != 1) {
-		PPU_ADDR = LOOP2 | 0x2000;
-		PPU_ADDR = LOOP3;
-		PPU_DATA = 0x18;
-		LOOP3++;
-		if (LOOP3 = 0xFF) {
-			LOOP3 = 0x0;
-			LOOP2++;
-		}
-		if (LOOP2 == 0x03 && LOOP3 == 0xBF) {
-			LOOP1 = 0x1;
-		}
-	}
 	
 	while (1) {
-		// ((VALUE >> 4) & 0xF) - Most Significant
-		// (VALUE & 0xF) - Least Significant
+		LOOP3_MOST = ((LOOP3 >> 4) & 0xF); // ((VALUE >> 4) & 0xF) - Most Significant
+		LOOP3_LEAST = (LOOP3 & 0xF); // (VALUE & 0xF) - Least Significant
 
 		LOOP1++;
-
-		GetButtonPress();
 
 		// Incerments for the LOOPs
 		if (LOOP1 == 0xFF) {
@@ -131,13 +81,50 @@ int main(void) {
 		}
 		if (LOOP2 == 0x40) {
 			LOOP3++;
-			STORED_INT = (LOOP3 & 0xF);
-			STORED_INT2 = ((LOOP3 >> 4) & 0xF);
 			LOOP2 = 0x00;
 		}
 
-		UpdateVisualCounters();
+		if (STORED_INT_COMPARE != LOOP3_LEAST) { // 0xX0
+			PPU_MASK = 0x00;
+			PPU_ADDR = 0x20;
+			PPU_ADDR = 0xC4;
+			PPU_DATA = LOOP3_LEAST;
+			PPU_ADDR = 0x20;
+			PPU_ADDR = 0x01;
+			PPU_DATA = 0x00;
+			PPU_MASK = 0x18;
+			STORED_INT_COMPARE = LOOP3_LEAST;
+		}
+
+		if (STORED_INT_COMPARE2 != LOOP3_MOST) { // 0x0X
+			PPU_MASK = 0x00;
+			PPU_ADDR = 0x20;
+			PPU_ADDR = 0xC3;
+			PPU_DATA = LOOP3_MOST;
+			PPU_ADDR = 0x20;
+			PPU_ADDR = 0x01;
+			PPU_DATA = 0x00;
+			PPU_MASK = 0x18;
+			STORED_INT_COMPARE2 = LOOP3_MOST;
+		}
+
+		PPU_MASK = 0x0;
+		PPU_ADDR = 0x0;
+		PPU_ADDR = 0x0;
+		PPU_DATA = 0x0;
+		PPU_MASK = 0x18;
 	}
 
 	return 0;
 }
+
+//void GetButtonPress() {
+//	struct regs r;
+//	CTRL1 = 0x01;
+//	CTRL1 = 0x00;
+//	for (r.a = 0; r.a != 8; r.a++) {
+//		CTRL_STORE_BUFFER = (CTRL1 & 0x1);
+//		CTRL_STORE = (CTRL_STORE << 1);
+//		CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER;
+//	}
+//}

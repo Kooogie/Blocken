@@ -10,102 +10,7 @@
 	.importzp	sp, sreg, regsave, regbank
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 	.macpack	longbranch
-	.forceimport	__STARTUP__
-	.export		_GetButtonPress
-	.export		_UpdateVisualCounters
 	.export		_main
-
-; ---------------------------------------------------------------
-; void __near__ GetButtonPress (void)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_GetButtonPress: near
-
-.segment	"CODE"
-
-	lda     #$01
-	sta     $4016
-	lda     #$00
-	sta     $4016
-	sta     M0001
-L0006:	lda     M0001
-	cmp     #$08
-	beq     L0003
-	lda     $4016
-	and     #$01
-	sta     $0011
-	lda     $0010
-	asl     a
-	sta     $0010
-	lda     $0011
-	ora     $0010
-	sta     $0010
-	inc     M0001
-	jmp     L0006
-L0003:	rts
-
-.segment	"BSS"
-
-M0001:
-	.res	6,$00
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ UpdateVisualCounters (void)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_UpdateVisualCounters: near
-
-.segment	"CODE"
-
-	lda     $0014
-	cmp     $0013
-	beq     L0004
-	lda     #$00
-	sta     $2001
-	lda     #$20
-	sta     $2006
-	lda     #$C4
-	sta     $2006
-	lda     $0013
-	sta     $2007
-	lda     #$20
-	sta     $2006
-	lda     #$00
-	sta     $2006
-	sta     $2007
-	lda     #$18
-	sta     $2001
-	lda     $0013
-	sta     $0014
-L0004:	lda     $0016
-	cmp     $0015
-	beq     L0003
-	lda     #$00
-	sta     $2001
-	lda     #$20
-	sta     $2006
-	lda     #$C3
-	sta     $2006
-	lda     $0015
-	sta     $2007
-	lda     #$20
-	sta     $2006
-	lda     #$00
-	sta     $2006
-	sta     $2007
-	lda     #$18
-	sta     $2001
-	lda     $0015
-	sta     $0016
-L0003:	rts
-
-.endproc
 
 ; ---------------------------------------------------------------
 ; int __near__ main (void)
@@ -133,57 +38,77 @@ L0003:	rts
 	lda     #$01
 	sta     $2006
 	lda     #$3F
+L000F:	sta     $2007
+	lda     #$18
+	sta     $2001
+	lda     $0004
+	lsr     a
+	lsr     a
+	lsr     a
+	lsr     a
+	and     #$0F
+	sta     $0005
+	lda     $0004
+	and     #$0F
+	sta     $0006
+	inc     $0000
+	lda     $0000
+	cmp     #$FF
+	bne     L000A
+	inc     $0001
+L000A:	lda     $0001
+	cmp     #$40
+	bne     L000B
+	inc     $0004
+	lda     #$00
+	sta     $0001
+L000B:	lda     $0014
+	cmp     $0006
+	beq     L000C
+	lda     #$00
+	sta     $2001
+	lda     #$20
+	sta     $2006
+	lda     #$C4
+	sta     $2006
+	lda     $0006
+	sta     $2007
+	lda     #$20
+	sta     $2006
+	lda     #$01
+	sta     $2006
+	lda     #$00
 	sta     $2007
 	lda     #$18
 	sta     $2001
-	jmp     L0012
-L000F:	lda     $0001
+	lda     $0006
+	sta     $0014
+L000C:	lda     $0016
+	cmp     $0005
+	beq     L000D
+	lda     #$00
+	sta     $2001
+	lda     #$20
 	sta     $2006
-	lda     $0004
+	lda     #$C3
 	sta     $2006
-	lda     #$18
+	lda     $0005
 	sta     $2007
-	inc     $0004
-	lda     #$FF
-	sta     $0004
-	lda     #$00
-	sta     $0004
-	inc     $0001
-	lda     $0001
-	cmp     #$03
-	bne     L0012
-	lda     $0004
-	cmp     #$BF
-	bne     L0012
+	lda     #$20
+	sta     $2006
 	lda     #$01
-	sta     $0000
-L0012:	lda     $0000
-	cmp     #$01
-	bne     L000F
-L000A:	inc     $0000
-	jsr     _GetButtonPress
-	lda     $0000
-	cmp     #$FF
-	bne     L0013
-	inc     $0001
-L0013:	lda     $0001
-	cmp     #$40
-	bne     L000E
-	inc     $0004
-	lda     $0004
-	and     #$0F
-	sta     $0013
-	lda     $0004
-	lsr     a
-	lsr     a
-	lsr     a
-	lsr     a
-	and     #$0F
-	sta     $0015
+	sta     $2006
 	lda     #$00
-	sta     $0001
-L000E:	jsr     _UpdateVisualCounters
-	jmp     L000A
+	sta     $2007
+	lda     #$18
+	sta     $2001
+	lda     $0005
+	sta     $0016
+L000D:	lda     #$00
+	sta     $2001
+	sta     $2006
+	sta     $2006
+	jmp     L000F
 
 .segment	"BSS"
 
