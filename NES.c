@@ -100,10 +100,8 @@ int main(void) {
 	PPU_MASK = 0x18;
 	
 	while (1) {
-		LOOP3_MOST = ((LOOP3 >> 4) & 0xF); // ((VALUE >> 4) & 0xF) - Most Significant
-		LOOP3_LEAST = (LOOP3 & 0xF); // (VALUE & 0xF) - Least Significant
 
-		// LOOP1++;
+		LOOP1++;
 
 		// Incerments for the LOOPs
 		if (LOOP1 == 0xFF) {
@@ -111,6 +109,8 @@ int main(void) {
 		}
 		if (LOOP2 == 0x40) {
 			LOOP3++;
+			LOOP3_MOST = ((LOOP3 >> 4) & 0xF); // ((VALUE >> 4) & 0xF) - Most Significant
+			LOOP3_LEAST = (LOOP3 & 0xF); // (VALUE & 0xF) - Least Significant
 			LOOP2 = 0x00;
 		}
 
