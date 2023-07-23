@@ -1,6 +1,6 @@
 # IN DEV
 
-(https://i.ibb.co/3y3Y32F/N-DEV.png)
+(https://ibb.co/PZLzLKW)
 
 The game is currently in development. There will be bugs present in the game. *There is no gameplay at the moment*.
 
