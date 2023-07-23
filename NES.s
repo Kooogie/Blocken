@@ -37,6 +37,24 @@
 	sta     $2006
 	lda     #$3F
 	sta     $2007
+	sta     $2006
+	lda     #$11
+	sta     $2006
+	lda     #$30
+	sta     $2007
+	lda     #$3F
+	sta     $2006
+	lda     #$12
+	sta     $2006
+	sta     $2007
+	lda     #$3F
+	sta     $2006
+	lda     #$13
+	sta     $2006
+	lda     #$3F
+	sta     $2007
+	lda     #$8F
+	sta     $4014
 	lda     #$18
 	sta     $2001
 L000D:	lda     $0002
@@ -49,7 +67,6 @@ L000D:	lda     $0002
 	lda     $0002
 	and     #$0F
 	sta     $0004
-	inc     $0000
 	lda     $0000
 	cmp     #$FF
 	bne     L000E
@@ -79,8 +96,18 @@ L0010:	lda     M0001
 	sta     $0015
 	inc     M0001
 	jmp     L0010
-L0011:	lda     $0011
-	cmp     $0004
+L0011:	lda     $8F03
+	lsr     a
+	lsr     a
+	lsr     a
+	lsr     a
+	and     #$0F
+	sta     M0002
+	lda     $8F03
+	and     #$0F
+	sta     M0003
+	lda     $0011
+	cmp     M0002
 	beq     L0012
 	lda     #$00
 	sta     $2001
@@ -88,7 +115,7 @@ L0011:	lda     $0011
 	sta     $2006
 	lda     #$C4
 	sta     $2006
-	lda     $0004
+	lda     M0002
 	sta     $2007
 	lda     #$20
 	sta     $2006
@@ -98,10 +125,10 @@ L0011:	lda     $0011
 	sta     $2007
 	lda     #$18
 	sta     $2001
-	lda     $0004
+	lda     M0002
 	sta     $0011
 L0012:	lda     $0013
-	cmp     $0003
+	cmp     M0003
 	jeq     L000D
 	lda     #$00
 	sta     $2001
@@ -109,7 +136,7 @@ L0012:	lda     $0013
 	sta     $2006
 	lda     #$C3
 	sta     $2006
-	lda     $0003
+	lda     M0003
 	sta     $2007
 	lda     #$20
 	sta     $2006
@@ -119,7 +146,7 @@ L0012:	lda     $0013
 	sta     $2007
 	lda     #$18
 	sta     $2001
-	lda     $0003
+	lda     M0003
 	sta     $0013
 	jmp     L000D
 
@@ -127,6 +154,10 @@ L0012:	lda     $0013
 
 M0001:
 	.res	6,$00
+M0002:
+	.res	1,$00
+M0003:
+	.res	1,$00
 
 .endproc
 
