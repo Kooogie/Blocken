@@ -1,6 +1,6 @@
 # IN DEV
 
-(https://lh3.googleusercontent.com/u/0/drive-viewer/AITFw-wLejsXjR2WvUGeH-hAF-c_e1CJhgR2kMT-Nkp92G1iSHApVFA1lSmB--LJgdqGEaIKG1OfcDQPTVregDVKO4iL190Q=w1920-h937)
+(https://i.ibb.co/3y3Y32F/N-DEV.png)
 
 The game is currently in development. There will be bugs present in the game. *There is no gameplay at the moment*.
 
