@@ -8,19 +8,24 @@
 #define LOOP3_MOST		(*(volatile unsigned char*)0x03)
 #define LOOP3_LEAST		(*(volatile unsigned char*)0x04)
 
-#define PPU_SCROLL_X	(*(volatile unsigned char*)0x05)
-#define PPU_SCROLL_Y	(*(volatile unsigned char*)0x06)
-#define PPU_POINTER		(*(volatile unsigned char*)0x07)
-#define PPU_STORED_DATA (*(volatile unsigned char*)0x08)
+#define PPU_SCROLL_X			(*(volatile unsigned char*)0x05)
+#define PPU_SCROLL_Y			(*(volatile unsigned char*)0x06)
+#define PPU_POINTER				(*(volatile unsigned char*)0x07)
+#define PPU_STORED_DATA 		(*(volatile unsigned char*)0x08)
+#define PPU_STORED_DATA_COMPARE (*(volatile unsigned char*)0x09)
 
-#define STORED_INT			(*(volatile unsigned char*)0x10)
-#define STORED_INT_COMPARE	(*(volatile unsigned char*)0x11)
-#define STORED_INT2			(*(volatile unsigned char*)0x12)
-#define STORED_INT_COMPARE2 (*(volatile unsigned char*)0x13)
+#define STORED_INT				(*(volatile unsigned char*)0x10)
+#define STORED_INT_COMPARE		(*(volatile unsigned char*)0x11)
+#define STORED_INT2				(*(volatile unsigned char*)0x12)
+#define STORED_INT_COMPARE2 	(*(volatile unsigned char*)0x13)
 
-#define CTRL_STORE_BUFFER	(*(volatile unsigned char*)0x14)
-#define CTRL_STORE			(*(volatile unsigned char*)0x15)
-#define CTRL_PRESSED_BUFFER (*(volatile unsigned char*)0x16)
+#define CTRL_STORE_BUFFER		(*(volatile unsigned char*)0x14)
+#define CTRL_STORE				(*(volatile unsigned char*)0x15)
+#define CTRL_PRESSED_BUFFER 	(*(volatile unsigned char*)0x16)
+
+#define BPS (*(volatile unsigned char*)0x50) // BACKGROUND POINTER STORE
+#define BPS2 (*(volatile unsigned char*)0x51) // BACKGROUND POINTER STORE 2
+
 
 
 // CPU Memory Addresses
@@ -67,9 +72,54 @@
 
 int main(void) {
 	struct regs r;
+	
+	
+	
+	// TEST DRAWING BEGIN
+	
+	PPU_MASK = 0x0;
+	for (BPS = 0xC2; BPS < 0xC6; BPS++) { // Loop for drawing floor
+		PPU_ADDR = 0x20;
+		PPU_ADDR = BPS;
+		if (BPS == 0xC5) {
+			PPU_DATA = 0x22;
+		}
+		else {
+			PPU_DATA = 0x14;
+		}
+	}
+	for (BPS = 0xE5; BPS < 0xEA; BPS++) { // Second loop for drawing second floor
+		PPU_ADDR = 0x20;
+		PPU_ADDR = BPS;
+		if (BPS == 0xE5) {
+			PPU_DATA = 0x23;
+		}
+		else {
+		PPU_DATA = 0x14;	
+		}
+	}
+	
+	
+	for (BPS2 = 0x60; BPS2 < 0xC0; BPS2 = BPS2 + 0x20) { // Drawing first brick tower
+		for (BPS = 0x3; BPS < 0x5; BPS++) {
+			PPU_ADDR = 0x20;
+			PPU_ADDR = BPS | BPS2; //First run [0x63]
+			PPU_DATA = 0x18;
+		}
+	}
+	for (BPS2 = 0x60; BPS2 < 0xE0; BPS2 = BPS2 + 0x20) { // Second brick tower
+		for (BPS = 0x7; BPS < 0x9; BPS++) {
+			PPU_ADDR = 0x20;
+			PPU_ADDR = BPS | BPS2; //First run [0x67]
+			PPU_DATA = 0x18;
+		}
+	}
+	
+	// END TEST DRAWING
+	
+	
 
-	unsigned char ppu_stored_data_compare = 0x0;
-
+	PPU_STORED_DATA_COMPARE = 0x0;
 	STORED_INT_COMPARE = 0x01;
 	STORED_INT_COMPARE2 = 0x01;
 
@@ -95,10 +145,10 @@ int main(void) {
 	PPU_ADDR = 0x13;
 	PPU_DATA = 0x3F; // Black
 
-	//SPRITE_DMA = 0x8F;
+	//SPRITE_DMA = 0x8F; //Used for filling in Sprite data from rom to memory. Not using it yet.
 
 	// Show sprites and background
-	PPU_MASK = 0x18;
+	PPU_MASK = 0x18; // 00011000
 	
 	while (1) {
 
@@ -119,15 +169,21 @@ int main(void) {
 		CTRL1 = 0x01;
 		CTRL1 = 0x00;
 		for (r.a = 0; r.a != 8; r.a++) {
-			CTRL_STORE_BUFFER = (CTRL1 & 0x1);
-			CTRL_STORE = (CTRL_STORE << 1);
-			CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER;
+			CTRL_STORE_BUFFER = (CTRL1 & 0x1); // Saves the first bit of CTRL1
+			CTRL_STORE = (CTRL_STORE << 1); // Shifts all the bits of CTRL_STORE once
+			CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER; // Apply the bytes from CTRL_STORE with CTRL_STORE_BUFFER
 		}
 
 
 		if (CTRL_STORE == 0x80) { // If pressing A
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
+			if (CTRL_PRESSED_BUFFER != CTRL_STORE) { // Used to stop visual glitches
 				PPU_STORED_DATA++;
+				CTRL_PRESSED_BUFFER = CTRL_STORE;
+			}
+		}
+		else if (CTRL_STORE == 0x40) { // If pressing B
+			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
+				PPU_STORED_DATA = PPU_STORED_DATA - 1;
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
@@ -163,7 +219,7 @@ int main(void) {
 			CTRL_PRESSED_BUFFER = 0x0;
 		}
 
-		if (PPU_STORED_DATA != ppu_stored_data_compare) {
+		if (PPU_STORED_DATA_COMPARE != PPU_STORED_DATA) {
 			PPU_MASK = 0x0;
 			PPU_ADDR = 0x20;
 			PPU_ADDR = PPU_POINTER;
@@ -172,7 +228,7 @@ int main(void) {
 			PPU_ADDR = 0x01;
 			PPU_DATA = 0x00;
 			PPU_MASK = 0x18;
-			ppu_stored_data_compare = PPU_STORED_DATA;
+			PPU_STORED_DATA_COMPARE = PPU_STORED_DATA;
 		}
 
 		// Counters for the X value on Sprite 1
