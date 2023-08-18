@@ -22,16 +22,22 @@
 #define CTRL_STORE_BUFFER		(*(volatile unsigned char*)0x14)
 #define CTRL_STORE				(*(volatile unsigned char*)0x15)
 #define CTRL_PRESSED_BUFFER 	(*(volatile unsigned char*)0x16)
+#define PPU_STATUS_MOST			(*(volatile unsigned char*)0x17)
 
-#define BPS		(*(volatile unsigned char*)0x50) // BACKGROUND POINTER STORE
-#define BPS2	(*(volatile unsigned char*)0x51) // BACKGROUND POINTER STORE 2
+#define BPS			(*(volatile unsigned char*)0x50) // BACKGROUND POINTER STORE
+#define BPS2		(*(volatile unsigned char*)0x51) // BACKGROUND POINTER STORE 2
+
+#define PL1_X		(*(volatile unsigned char*)0x6100) // PLAYER1 X
+#define PL1_S		(*(volatile unsigned char*)0x6101) // PLAYER1 SPRITE
+#define PL1_P		(*(volatile unsigned char*)0x6102) // PLAYER1 PALETTE
+#define PL1_Y		(*(volatile unsigned char*)0x6103) // PLAYER1 Y
+#define PL1_CHANGED (*(volatile unsigned char*)0x6104) // PLAYER CHANGED CHECK
 
 
 
 // CPU Memory Addresses
 #define PPU_MASK		(*(volatile unsigned char*)0x2001)
 #define PPU_STATUS		(*(volatile unsigned char*)0x2002)
-#define PPU_STATUS_MOST (*(volatile unsigned char*)0x17)
 #define OAM_ADDR		(*(volatile unsigned char*)0x2003)
 #define OAM_DATA		(*(volatile unsigned char*)0x2004)
 #define PPU_ADDR		(*(volatile unsigned char*)0x2006)
@@ -39,10 +45,6 @@
 #define SPRITE_DMA		(*(volatile unsigned char*)0x4014)
 #define CTRL1			(*(volatile unsigned char*)0x4016)
 
-#define SPRITE1_Y		(*(volatile unsigned char*)0x8F00)
-#define SPRITE1_SPR		(*(volatile unsigned char*)0x8F01)
-#define SPRITE1_PAL		(*(volatile unsigned char*)0x8F02)
-#define SPRITE1_X		(*(volatile unsigned char*)0x8F03)
 
 
 // PPU Memory Addresses
@@ -78,12 +80,37 @@ int main(void) {
 	struct regs r;
 	unsigned int MEM_POINTER;
 
-	
+	PL1_CHANGED = 0x1;
+
+	PL1_X = 0x20;
+	PL1_S = 0x1A;
+	PL1_P = 0x02;
+	PL1_Y = 0x20;
+
+
 	// TEST DRAWING BEGIN
-	
-	for (BPS = 0x00; BPS != 0xFF; BPS++) {
+
+	for (BPS = 0x00; BPS < 0xFF; BPS++) { // Loop for $F000 - $F0FF
 		MEM_POINTER = *((unsigned char*)0xF000 + BPS);
 		PPU_ADDR = 0x20;
+		PPU_ADDR = BPS;
+		PPU_DATA = MEM_POINTER;
+	}
+	for (BPS = 0x00; BPS < 0xFF; BPS++) {
+		MEM_POINTER = *((unsigned char*)0xF100 + BPS);
+		PPU_ADDR = 0x21;
+		PPU_ADDR = BPS;
+		PPU_DATA = MEM_POINTER;
+	}
+	for (BPS = 0x00; BPS < 0xFF; BPS++) {
+		MEM_POINTER = *((unsigned char*)0xF200 + BPS);
+		PPU_ADDR = 0x22;
+		PPU_ADDR = BPS;
+		PPU_DATA = MEM_POINTER;
+	}
+	for (BPS = 0x00; BPS < 0xC0; BPS++) {
+		MEM_POINTER = *((unsigned char*)0xF300 + BPS);
+		PPU_ADDR = 0x23;
 		PPU_ADDR = BPS;
 		PPU_DATA = MEM_POINTER;
 	}
@@ -106,11 +133,11 @@ int main(void) {
 
 	// Shifting Camera to $2001
 	PPU_ADDR = 0x20;
-	PPU_ADDR = 0x01;
+	PPU_ADDR = 0x0;
 	PPU_DATA = 0x0;
 
 	// Show sprites and background
-	PPU_MASK = 0x18; // 00011000
+	PPU_MASK = 0x1A; // 00011010
 	
 	while (1) {
 
@@ -126,58 +153,56 @@ int main(void) {
 
 		if (CTRL_STORE == 0x80) { // If pressing A
 			if (CTRL_PRESSED_BUFFER != CTRL_STORE) { // Used to stop visual glitches
-				PPU_STORED_DATA++;
+
+
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
 		else if (CTRL_STORE == 0x40) { // If pressing B
 			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-				PPU_STORED_DATA = PPU_STORED_DATA - 1;
+
+
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
 		else if (CTRL_STORE == 0x01) { // If pressing Right
 			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-				PPU_POINTER++;
-				PPU_STORED_DATA = 0x0;
+				PL1_X++;
+				PL1_CHANGED++;
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
 		else if (CTRL_STORE == 0x02) {
 			if (CTRL_PRESSED_BUFFER != CTRL_STORE) { // If pressing Left
-				PPU_POINTER = PPU_POINTER - 1;
-				PPU_STORED_DATA = 0x0;
+
+
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
 		else if (CTRL_STORE == 0x04) { // If pressing Down
 			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-				PPU_POINTER = PPU_POINTER + 0x20;
-				PPU_STORED_DATA = 0x0;
+
+
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
 		else if (CTRL_STORE == 0x08) { // If pressing Up
 			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-				PPU_POINTER = PPU_POINTER - 0x20;
-				PPU_STORED_DATA = 0x0;
+
+
 				CTRL_PRESSED_BUFFER = CTRL_STORE;
 			}
 		}
 		else {
 			CTRL_PRESSED_BUFFER = 0x0;
+			CTRL_STORE = 0x0;
 		}
 
-		if (PPU_STORED_DATA_COMPARE != PPU_STORED_DATA) {
+		if (PL1_CHANGED != 0x0) {
 			PPU_MASK = 0x0;
-			PPU_ADDR = 0x20;
-			PPU_ADDR = PPU_POINTER;
-			PPU_DATA = PPU_STORED_DATA;
-			PPU_ADDR = 0x20;
-			PPU_ADDR = 0x01;
-			PPU_DATA = 0x00;
-			PPU_MASK = 0x18;
-			PPU_STORED_DATA_COMPARE = PPU_STORED_DATA;
+			SPRITE_DMA = 0x61;
+			PPU_MASK = 0x1A;
+			PL1_CHANGED = 0x0;
 		}
 	}
 
