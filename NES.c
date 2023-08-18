@@ -23,8 +23,8 @@
 #define CTRL_STORE				(*(volatile unsigned char*)0x15)
 #define CTRL_PRESSED_BUFFER 	(*(volatile unsigned char*)0x16)
 
-#define BPS (*(volatile unsigned char*)0x50) // BACKGROUND POINTER STORE
-#define BPS2 (*(volatile unsigned char*)0x51) // BACKGROUND POINTER STORE 2
+#define BPS		(*(volatile unsigned char*)0x50) // BACKGROUND POINTER STORE
+#define BPS2	(*(volatile unsigned char*)0x51) // BACKGROUND POINTER STORE 2
 
 
 
@@ -60,6 +60,9 @@
 	//PALETTE_ADDR			$3F00 - $3F1F | $0020 Bytes
 	//MIRRORS				$3F20 - $3FFF | $00E0 Bytes
 
+// ROM Memory Addresses
+	//PAL ROM	$FC00 - $FC0F | $15 Bytes
+
 // A :		10000000 0x80
 // B :		01000000 0x40
 // Select :	00100000 0x20
@@ -70,49 +73,19 @@
 // Right :	00000001 0x01
 
 
+
 int main(void) {
 	struct regs r;
-	
-	
+	unsigned int MEM_POINTER;
+
 	
 	// TEST DRAWING BEGIN
 	
-	PPU_MASK = 0x0;
-	for (BPS = 0xC2; BPS < 0xC6; BPS++) { // Loop for drawing floor
+	for (BPS = 0x00; BPS != 0xFF; BPS++) {
+		MEM_POINTER = *((unsigned char*)0xF000 + BPS);
 		PPU_ADDR = 0x20;
 		PPU_ADDR = BPS;
-		if (BPS == 0xC5) {
-			PPU_DATA = 0x22;
-		}
-		else {
-			PPU_DATA = 0x14;
-		}
-	}
-	for (BPS = 0xE5; BPS < 0xEA; BPS++) { // Second loop for drawing second floor
-		PPU_ADDR = 0x20;
-		PPU_ADDR = BPS;
-		if (BPS == 0xE5) {
-			PPU_DATA = 0x23;
-		}
-		else {
-		PPU_DATA = 0x14;	
-		}
-	}
-	
-	
-	for (BPS2 = 0x60; BPS2 < 0xC0; BPS2 = BPS2 + 0x20) { // Drawing first brick tower
-		for (BPS = 0x3; BPS < 0x5; BPS++) {
-			PPU_ADDR = 0x20;
-			PPU_ADDR = BPS | BPS2; //First run [0x63]
-			PPU_DATA = 0x18;
-		}
-	}
-	for (BPS2 = 0x60; BPS2 < 0xE0; BPS2 = BPS2 + 0x20) { // Second brick tower
-		for (BPS = 0x7; BPS < 0x9; BPS++) {
-			PPU_ADDR = 0x20;
-			PPU_ADDR = BPS | BPS2; //First run [0x67]
-			PPU_DATA = 0x18;
-		}
+		PPU_DATA = MEM_POINTER;
 	}
 	
 	// END TEST DRAWING
@@ -123,47 +96,23 @@ int main(void) {
 	STORED_INT_COMPARE = 0x01;
 	STORED_INT_COMPARE2 = 0x01;
 
-	// Begin changing the background color
-	PPU_ADDR = 0x3F;
-	PPU_ADDR = 0x00;
-	PPU_DATA = 0x30;
+	// For loop for getting PAL memory into NES.
+	for (BPS = 0xBF; BPS != 0x10; BPS++) {
+		MEM_POINTER = *((unsigned char*)0xFC00 + BPS);
+		PPU_ADDR = 0x3F;
+		PPU_ADDR = BPS;
+		PPU_DATA = MEM_POINTER;
+	}
 
-	PPU_ADDR = 0x3F;
+	// Shifting Camera to $2001
+	PPU_ADDR = 0x20;
 	PPU_ADDR = 0x01;
-	PPU_DATA = 0x3F;
-
-	// Changing Sprite PAL
-	PPU_ADDR = 0x3F;
-	PPU_ADDR = 0x11;
-	PPU_DATA = 0x30; // White
-
-	PPU_ADDR = 0x3F;
-	PPU_ADDR = 0x12;
-	PPU_DATA = 0x12; // Blue
-
-	PPU_ADDR = 0x3F;
-	PPU_ADDR = 0x13;
-	PPU_DATA = 0x3F; // Black
-
-	//SPRITE_DMA = 0x8F; //Used for filling in Sprite data from rom to memory. Not using it yet.
+	PPU_DATA = 0x0;
 
 	// Show sprites and background
 	PPU_MASK = 0x18; // 00011000
 	
 	while (1) {
-
-		//LOOP1++;
-
-		//// Incerments for the LOOPs
-		//if (LOOP1 == 0xFF) {
-		//	LOOP2++;
-		//}
-		//if (LOOP2 == 0x40) {
-		//	LOOP3++;
-		//	LOOP3_MOST = ((LOOP3 >> 4) & 0xF); // ((VALUE >> 4) & 0xF) - Most Significant
-		//	LOOP3_LEAST = (LOOP3 & 0xF); // (VALUE & 0xF) - Least Significant
-		//	LOOP2 = 0x00;
-		//}
 
 		// Get controller input
 		CTRL1 = 0x01;
@@ -230,31 +179,6 @@ int main(void) {
 			PPU_MASK = 0x18;
 			PPU_STORED_DATA_COMPARE = PPU_STORED_DATA;
 		}
-
-		// Counters for the X value on Sprite 1
-		//if (STORED_INT_COMPARE != LOOP3_LEAST) { // 0xX0
-		//	PPU_MASK = 0x00;
-		//	PPU_ADDR = 0x20;
-		//	PPU_ADDR = 0xC4;
-		//	PPU_DATA = LOOP3_LEAST;
-		//	PPU_ADDR = 0x20;
-		//	PPU_ADDR = 0x01;
-		//	PPU_DATA = 0x00;
-		//	PPU_MASK = 0x18;
-		//	STORED_INT_COMPARE = LOOP3_LEAST;
-		//}
-
-		//if (STORED_INT_COMPARE2 != LOOP3_MOST) { // 0x0X
-		//	PPU_MASK = 0x00;
-		//	PPU_ADDR = 0x20;
-		//	PPU_ADDR = 0xC3;
-		//	PPU_DATA = LOOP3_MOST;
-		//	PPU_ADDR = 0x20;
-		//	PPU_ADDR = 0x01;
-		//	PPU_DATA = 0x00;
-		//	PPU_MASK = 0x18;
-		//	STORED_INT_COMPARE2 = LOOP3_MOST;
-		//}
 	}
 
 	return 0;

@@ -24,130 +24,62 @@
 .segment	"CODE"
 
 	lda     #$00
-	sta     $2001
-	lda     #$C2
 	sta     $0050
-L0043:	lda     $0050
-	cmp     #$C6
-	bcs     L0045
+L002B:	lda     $0050
+	cmp     #$FF
+	beq     L002C
+	ldy     $0050
+	ldx     #$00
+	lda     $F000,y
+	sta     M0002
+	stx     M0002+1
 	lda     #$20
 	sta     $2006
 	lda     $0050
 	sta     $2006
-	lda     $0050
-	cmp     #$C5
-	bne     L0044
-	lda     #$22
-	jmp     L003E
-L0044:	lda     #$14
-L003E:	sta     $2007
-	inc     $0050
-	jmp     L0043
-L0045:	lda     #$E5
-	sta     $0050
-L0046:	lda     $0050
-	cmp     #$EA
-	bcs     L0048
-	lda     #$20
-	sta     $2006
-	lda     $0050
-	sta     $2006
-	lda     $0050
-	cmp     #$E5
-	bne     L0047
-	lda     #$23
-	jmp     L003F
-L0047:	lda     #$14
-L003F:	sta     $2007
-	inc     $0050
-	jmp     L0046
-L0048:	lda     #$60
-L0040:	sta     $0051
-	cmp     #$C0
-	bcs     L004B
-	lda     #$03
-	sta     $0050
-L0049:	lda     $0050
-	cmp     #$05
-	bcs     L004A
-	lda     #$20
-	sta     $2006
-	lda     $0051
-	ora     $0050
-	sta     $2006
-	lda     #$18
+	lda     M0002
 	sta     $2007
 	inc     $0050
-	jmp     L0049
-L004A:	lda     $0051
-	clc
-	adc     #$20
-	jmp     L0040
-L004B:	lda     #$60
-L0041:	sta     $0051
-	cmp     #$E0
-	bcs     L004E
-	lda     #$07
-	sta     $0050
-L004C:	lda     $0050
-	cmp     #$09
-	bcs     L004D
-	lda     #$20
-	sta     $2006
-	lda     $0051
-	ora     $0050
-	sta     $2006
-	lda     #$18
-	sta     $2007
-	inc     $0050
-	jmp     L004C
-L004D:	lda     $0051
-	clc
-	adc     #$20
-	jmp     L0041
-L004E:	lda     #$00
+	jmp     L002B
+L002C:	lda     #$00
 	sta     $0009
 	lda     #$01
 	sta     $0011
 	sta     $0013
+	lda     #$BF
+	sta     $0050
+L002D:	lda     $0050
+	cmp     #$10
+	beq     L002E
+	ldy     $0050
+	ldx     #$00
+	lda     $FC00,y
+	sta     M0002
+	stx     M0002+1
 	lda     #$3F
 	sta     $2006
-	lda     #$00
+	lda     $0050
 	sta     $2006
-	lda     #$30
+	lda     M0002
 	sta     $2007
-	lda     #$3F
+	inc     $0050
+	jmp     L002D
+L002E:	lda     #$20
 	sta     $2006
 	lda     #$01
 	sta     $2006
-	lda     #$3F
-	sta     $2007
-	sta     $2006
-	lda     #$11
-	sta     $2006
-	lda     #$30
-	sta     $2007
-	lda     #$3F
-	sta     $2006
-	lda     #$12
-	sta     $2006
-	sta     $2007
-	lda     #$3F
-	sta     $2006
-	lda     #$13
-	sta     $2006
-	lda     #$3F
+	lda     #$00
 	sta     $2007
 	lda     #$18
 	sta     $2001
-L004F:	lda     #$01
+L002F:	lda     #$01
 	sta     $4016
 	lda     #$00
 	sta     $4016
 	sta     M0001
-L0050:	lda     M0001
+L0030:	lda     M0001
 	cmp     #$08
-	beq     L0051
+	beq     L0031
 	lda     $4016
 	and     #$01
 	sta     $0014
@@ -158,45 +90,45 @@ L0050:	lda     M0001
 	ora     $0015
 	sta     $0015
 	inc     M0001
-	jmp     L0050
-L0051:	lda     $0015
+	jmp     L0030
+L0031:	lda     $0015
 	cmp     #$80
-	bne     L0052
+	bne     L0032
 	lda     $0016
 	cmp     $0015
-	jeq     L0058
+	jeq     L0038
 	inc     $0008
 	lda     $0015
-	jmp     L0042
-L0052:	lda     $0015
+	jmp     L002A
+L0032:	lda     $0015
 	cmp     #$40
-	bne     L0053
+	bne     L0033
 	lda     $0016
 	cmp     $0015
-	beq     L0058
+	beq     L0038
 	lda     $0008
 	sec
 	sbc     #$01
 	sta     $0008
 	lda     $0015
-	jmp     L0042
-L0053:	lda     $0015
+	jmp     L002A
+L0033:	lda     $0015
 	cmp     #$01
-	bne     L0054
+	bne     L0034
 	lda     $0016
 	cmp     $0015
-	beq     L0058
+	beq     L0038
 	inc     $0007
 	lda     #$00
 	sta     $0008
 	lda     $0015
-	jmp     L0042
-L0054:	lda     $0015
+	jmp     L002A
+L0034:	lda     $0015
 	cmp     #$02
-	bne     L0055
+	bne     L0035
 	lda     $0016
 	cmp     $0015
-	beq     L0058
+	beq     L0038
 	lda     $0007
 	sec
 	sbc     #$01
@@ -204,13 +136,13 @@ L0054:	lda     $0015
 	lda     #$00
 	sta     $0008
 	lda     $0015
-	jmp     L0042
-L0055:	lda     $0015
+	jmp     L002A
+L0035:	lda     $0015
 	cmp     #$04
-	bne     L0056
+	bne     L0036
 	lda     $0016
 	cmp     $0015
-	beq     L0058
+	beq     L0038
 	lda     $0007
 	clc
 	adc     #$20
@@ -218,13 +150,13 @@ L0055:	lda     $0015
 	lda     #$00
 	sta     $0008
 	lda     $0015
-	jmp     L0042
-L0056:	lda     $0015
+	jmp     L002A
+L0036:	lda     $0015
 	cmp     #$08
-	bne     L0057
+	bne     L0037
 	lda     $0016
 	cmp     $0015
-	beq     L0058
+	beq     L0038
 	lda     $0007
 	sec
 	sbc     #$20
@@ -232,12 +164,12 @@ L0056:	lda     $0015
 	lda     #$00
 	sta     $0008
 	lda     $0015
-	jmp     L0042
-L0057:	lda     #$00
-L0042:	sta     $0016
-L0058:	lda     $0009
+	jmp     L002A
+L0037:	lda     #$00
+L002A:	sta     $0016
+L0038:	lda     $0009
 	cmp     $0008
-	jeq     L004F
+	jeq     L002F
 	lda     #$00
 	sta     $2001
 	lda     #$20
@@ -256,12 +188,14 @@ L0058:	lda     $0009
 	sta     $2001
 	lda     $0008
 	sta     $0009
-	jmp     L004F
+	jmp     L002F
 
 .segment	"BSS"
 
 M0001:
 	.res	6,$00
+M0002:
+	.res	2,$00
 
 .endproc
 
