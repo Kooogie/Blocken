@@ -78,7 +78,7 @@
 
 int main(void) {
 	struct regs r;
-	unsigned int MEM_POINTER;
+	unsigned char MEM_POINTER;
 
 	PL1_CHANGED = 0x1;
 
@@ -89,6 +89,12 @@ int main(void) {
 
 
 	// TEST DRAWING BEGIN
+	
+	//WIP CODE
+	
+	
+	
+	//END WIP
 
 	for (BPS = 0x00; BPS < 0xFF; BPS++) { // Loop for $F000 - $F0FF
 		MEM_POINTER = *((unsigned char*)0xF000 + BPS);
@@ -116,8 +122,7 @@ int main(void) {
 	}
 	
 	// END TEST DRAWING
-	
-	
+
 
 	PPU_STORED_DATA_COMPARE = 0x0;
 	STORED_INT_COMPARE = 0x01;
@@ -131,7 +136,7 @@ int main(void) {
 		PPU_DATA = MEM_POINTER;
 	}
 
-	// Shifting Camera to $2001
+	// Shifting Camera to $2000
 	PPU_ADDR = 0x20;
 	PPU_ADDR = 0x0;
 	PPU_DATA = 0x0;

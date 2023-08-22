@@ -39,10 +39,8 @@ L0035:	lda     $0050
 	cmp     #$FF
 	bcs     L0036
 	ldy     $0050
-	ldx     #$00
 	lda     $F000,y
 	sta     M0002
-	stx     M0002+1
 	lda     #$20
 	sta     $2006
 	lda     $0050
@@ -57,10 +55,8 @@ L0037:	lda     $0050
 	cmp     #$FF
 	bcs     L0038
 	ldy     $0050
-	ldx     #$00
 	lda     $F100,y
 	sta     M0002
-	stx     M0002+1
 	lda     #$21
 	sta     $2006
 	lda     $0050
@@ -75,10 +71,8 @@ L0039:	lda     $0050
 	cmp     #$FF
 	bcs     L003A
 	ldy     $0050
-	ldx     #$00
 	lda     $F200,y
 	sta     M0002
-	stx     M0002+1
 	lda     #$22
 	sta     $2006
 	lda     $0050
@@ -93,10 +87,8 @@ L003B:	lda     $0050
 	cmp     #$C0
 	bcs     L003C
 	ldy     $0050
-	ldx     #$00
 	lda     $F300,y
 	sta     M0002
-	stx     M0002+1
 	lda     #$23
 	sta     $2006
 	lda     $0050
@@ -105,7 +97,12 @@ L003B:	lda     $0050
 	sta     $2007
 	inc     $0050
 	jmp     L003B
-L003C:	lda     #$00
+L003C:	lda     $F000
+	sta     M0002
+	sta     $0050
+	lda     #<(M0002)
+	sta     $0051
+	lda     #$00
 	sta     $0009
 	lda     #$01
 	sta     $0011
@@ -116,10 +113,8 @@ L003D:	lda     $0050
 	cmp     #$10
 	beq     L003E
 	ldy     $0050
-	ldx     #$00
 	lda     $FC00,y
 	sta     M0002
-	stx     M0002+1
 	lda     #$3F
 	sta     $2006
 	lda     $0050
@@ -230,7 +225,7 @@ L0048:	lda     $6104
 M0001:
 	.res	6,$00
 M0002:
-	.res	2,$00
+	.res	1,$00
 
 .endproc
 
