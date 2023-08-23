@@ -2,48 +2,35 @@
 
 
 // CPU Custom Memory Addresses, Hints for where values should be stored at to save up on performance
-#define LOOP1			(*(volatile unsigned char*)0x00)
-#define LOOP2			(*(volatile unsigned char*)0x01)
-#define LOOP3			(*(volatile unsigned char*)0x02)
-#define LOOP3_MOST		(*(volatile unsigned char*)0x03)
-#define LOOP3_LEAST		(*(volatile unsigned char*)0x04)
+#define LOOP1	(*(volatile unsigned char*)0x00)
+#define LOOP2	(*(volatile unsigned char*)0x01)
+#define LOOP3	(*(volatile unsigned char*)0x02)
 
-#define PPU_SCROLL_X			(*(volatile unsigned char*)0x05)
-#define PPU_SCROLL_Y			(*(volatile unsigned char*)0x06)
-#define PPU_POINTER				(*(volatile unsigned char*)0x07)
-#define PPU_STORED_DATA 		(*(volatile unsigned char*)0x08)
-#define PPU_STORED_DATA_COMPARE (*(volatile unsigned char*)0x09)
+#define PPU_SCROLL_X	(*(volatile unsigned char*)0x20)
+#define PPU_SCROLL_Y	(*(volatile unsigned char*)0x21)
 
-#define STORED_INT				(*(volatile unsigned char*)0x10)
-#define STORED_INT_COMPARE		(*(volatile unsigned char*)0x11)
-#define STORED_INT2				(*(volatile unsigned char*)0x12)
-#define STORED_INT_COMPARE2 	(*(volatile unsigned char*)0x13)
+#define CTRL_STORE_BUFFER		(*(volatile unsigned char*)0x30)
+#define CTRL_STORE				(*(volatile unsigned char*)0x31)
+#define CTRL_STORE_MOST			(*(volatile unsigned char*)0x32)
+#define CTRL_STORE_LEAST		(*(volatile unsigned char*)0x33)
+#define CTRL_STORE_MOST_FLAG	(*(volatile unsigned char*)0x34)
+#define CTRL_STORE_LEAST_FLAG	(*(volatile unsigned char*)0x35)
 
-#define CTRL_STORE_BUFFER		(*(volatile unsigned char*)0x14)
-#define CTRL_STORE				(*(volatile unsigned char*)0x15)
-#define CTRL_PRESSED_BUFFER 	(*(volatile unsigned char*)0x16)
-#define PPU_STATUS_MOST			(*(volatile unsigned char*)0x17)
-
-#define BPS			(*(volatile unsigned char*)0x50) // BACKGROUND POINTER STORE
-#define BPS2		(*(volatile unsigned char*)0x51) // BACKGROUND POINTER STORE 2
-
-#define PL1_X		(*(volatile unsigned char*)0x6100) // PLAYER1 X
-#define PL1_S		(*(volatile unsigned char*)0x6101) // PLAYER1 SPRITE
-#define PL1_P		(*(volatile unsigned char*)0x6102) // PLAYER1 PALETTE
-#define PL1_Y		(*(volatile unsigned char*)0x6103) // PLAYER1 Y
-#define PL1_CHANGED (*(volatile unsigned char*)0x6104) // PLAYER CHANGED CHECK
+#define BPS		(*(volatile unsigned char*)0x40) // BACKGROUND POINTER STORE
+#define BPS2	(*(volatile unsigned char*)0x41) // BACKGROUND POINTER STORE 2
 
 
 
 // CPU Memory Addresses
-#define PPU_MASK		(*(volatile unsigned char*)0x2001)
-#define PPU_STATUS		(*(volatile unsigned char*)0x2002)
-#define OAM_ADDR		(*(volatile unsigned char*)0x2003)
-#define OAM_DATA		(*(volatile unsigned char*)0x2004)
-#define PPU_ADDR		(*(volatile unsigned char*)0x2006)
-#define PPU_DATA		(*(volatile unsigned char*)0x2007)
-#define SPRITE_DMA		(*(volatile unsigned char*)0x4014)
-#define CTRL1			(*(volatile unsigned char*)0x4016)
+#define PPU_MASK	(*(volatile unsigned char*)0x2001)
+#define PPU_STATUS	(*(volatile unsigned char*)0x2002)
+#define OAM_ADDR	(*(volatile unsigned char*)0x2003)
+#define OAM_DATA	(*(volatile unsigned char*)0x2004)
+#define PPU_ADDR	(*(volatile unsigned char*)0x2006)
+#define PPU_DATA	(*(volatile unsigned char*)0x2007)
+
+#define SPRITE_DMA	(*(volatile unsigned char*)0x4014)
+#define CTRL1		(*(volatile unsigned char*)0x4016)
 
 
 
@@ -65,14 +52,16 @@
 // ROM Memory Addresses
 	//PAL ROM	$FC00 - $FC0F | $15 Bytes
 
-// A :		10000000 0x80
-// B :		01000000 0x40
-// Select :	00100000 0x20
-// Start :	00010000 0x10
-// Up :		00001000 0x08
-// Down :	00000100 0x04
-// Left :	00000010 0x02
-// Right :	00000001 0x01
+
+// Controller Codes
+	// A :		10000000 0x80
+	// B :		01000000 0x40
+	// Select :	00100000 0x20
+	// Start :	00010000 0x10
+	// Up :		00001000 0x08
+	// Down :	00000100 0x04
+	// Left :	00000010 0x02
+	// Right :	00000001 0x01
 
 
 
@@ -80,42 +69,29 @@ int main(void) {
 	struct regs r;
 	unsigned char MEM_POINTER;
 
-	PL1_CHANGED = 0x1;
-
-	PL1_X = 0x20;
-	PL1_S = 0x1A;
-	PL1_P = 0x02;
-	PL1_Y = 0x20;
-
 
 	// TEST DRAWING BEGIN
-	
-	//WIP CODE
-	
-	
-	
-	//END WIP
 
 	for (BPS = 0x00; BPS < 0xFF; BPS++) { // Loop for $F000 - $F0FF
-		MEM_POINTER = *((unsigned char*)0xF000 + BPS);
+		MEM_POINTER = *((unsigned char*)0xEFF0 + BPS);
 		PPU_ADDR = 0x20;
 		PPU_ADDR = BPS;
 		PPU_DATA = MEM_POINTER;
 	}
-	for (BPS = 0x00; BPS < 0xFF; BPS++) {
-		MEM_POINTER = *((unsigned char*)0xF100 + BPS);
+	for (BPS = 0x00; BPS < 0x100; BPS++) { // NOT FINISHED EDITING
+		MEM_POINTER = *((unsigned char*)0xF0F0 + BPS);
 		PPU_ADDR = 0x21;
 		PPU_ADDR = BPS;
 		PPU_DATA = MEM_POINTER;
 	}
 	for (BPS = 0x00; BPS < 0xFF; BPS++) {
-		MEM_POINTER = *((unsigned char*)0xF200 + BPS);
+		MEM_POINTER = *((unsigned char*)0xF1F0 + BPS);
 		PPU_ADDR = 0x22;
 		PPU_ADDR = BPS;
 		PPU_DATA = MEM_POINTER;
 	}
 	for (BPS = 0x00; BPS < 0xC0; BPS++) {
-		MEM_POINTER = *((unsigned char*)0xF300 + BPS);
+		MEM_POINTER = *((unsigned char*)0xF2F0 + BPS);
 		PPU_ADDR = 0x23;
 		PPU_ADDR = BPS;
 		PPU_DATA = MEM_POINTER;
@@ -123,13 +99,8 @@ int main(void) {
 	
 	// END TEST DRAWING
 
-
-	PPU_STORED_DATA_COMPARE = 0x0;
-	STORED_INT_COMPARE = 0x01;
-	STORED_INT_COMPARE2 = 0x01;
-
 	// For loop for getting PAL memory into NES.
-	for (BPS = 0xBF; BPS != 0x10; BPS++) {
+	for (BPS = 0xBF; BPS != 0x20; BPS++) {
 		MEM_POINTER = *((unsigned char*)0xFC00 + BPS);
 		PPU_ADDR = 0x3F;
 		PPU_ADDR = BPS;
@@ -142,7 +113,7 @@ int main(void) {
 	PPU_DATA = 0x0;
 
 	// Show sprites and background
-	PPU_MASK = 0x1A; // 00011010
+	PPU_MASK = 0x1E; // 00011110
 	
 	while (1) {
 
@@ -154,60 +125,24 @@ int main(void) {
 			CTRL_STORE = (CTRL_STORE << 1); // Shifts all the bits of CTRL_STORE once
 			CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER; // Apply the bytes from CTRL_STORE with CTRL_STORE_BUFFER
 		}
-
-
-		if (CTRL_STORE == 0x80) { // If pressing A
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) { // Used to stop visual glitches
-
-
-				CTRL_PRESSED_BUFFER = CTRL_STORE;
-			}
-		}
-		else if (CTRL_STORE == 0x40) { // If pressing B
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-
-
-				CTRL_PRESSED_BUFFER = CTRL_STORE;
-			}
-		}
-		else if (CTRL_STORE == 0x01) { // If pressing Right
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-				PL1_X++;
-				PL1_CHANGED++;
-				CTRL_PRESSED_BUFFER = CTRL_STORE;
-			}
-		}
-		else if (CTRL_STORE == 0x02) {
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) { // If pressing Left
-
-
-				CTRL_PRESSED_BUFFER = CTRL_STORE;
-			}
-		}
-		else if (CTRL_STORE == 0x04) { // If pressing Down
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-
-
-				CTRL_PRESSED_BUFFER = CTRL_STORE;
-			}
-		}
-		else if (CTRL_STORE == 0x08) { // If pressing Up
-			if (CTRL_PRESSED_BUFFER != CTRL_STORE) {
-
-
-				CTRL_PRESSED_BUFFER = CTRL_STORE;
-			}
-		}
-		else {
-			CTRL_PRESSED_BUFFER = 0x0;
-			CTRL_STORE = 0x0;
-		}
-
-		if (PL1_CHANGED != 0x0) {
+		
+		CTRL_STORE_MOST = (CTRL_STORE & 0xF);
+		CTRL_STORE_LEAST = ((CTRL_STORE << 4) & 0xF);
+		if (CTRL_STORE_MOST_FLAG != CTRL_STORE_MOST) {
 			PPU_MASK = 0x0;
-			SPRITE_DMA = 0x61;
-			PPU_MASK = 0x1A;
-			PL1_CHANGED = 0x0;
+			PPU_ADDR = 0x20;
+			PPU_ADDR = 0x20;
+			PPU_DATA = CTRL_STORE_MOST;
+			PPU_MASK = 0x1E;
+			CTRL_STORE_MOST_FLAG = CTRL_STORE_MOST;
+		}
+		if (CTRL_STORE_LEAST_FLAG != CTRL_STORE_LEAST) {
+			PPU_MASK = 0x0;
+			PPU_ADDR = 0x20;
+			PPU_ADDR = 0x21;
+			PPU_DATA = CTRL_STORE_LEAST;
+			PPU_MASK = 0x1E;
+			CTRL_STORE_LEAST_FLAG = CTRL_STORE_LEAST;
 		}
 	}
 
