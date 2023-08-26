@@ -1,4 +1,4 @@
-bin\cc65 -O -Oi -r -Cl -Os -v NES.c
+bin\cc65 -O -r -Or -Oi  NES.c -o source\NES.s
 
 pause
 
