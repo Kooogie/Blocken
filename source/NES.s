@@ -6,18 +6,28 @@
 	.smart		on
 	.autoimport	on
 	.case		on
-	.debuginfo	off
+	.debuginfo	on
 	.importzp	sp, sreg, regsave, regbank
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 	.macpack	longbranch
+	.dbg		file, "NES.c", 7343, 1695786092
+	.dbg		file, "E:\Blocken ROM\include/6502.h", 5470, 1688317888
+	.dbg		file, "include/Blocken.h", 4721, 1695780954
 	.export		_MEM_POINTER
+	.export		_MEM_POINTER2
 	.export		_main
-	.export		_draw
+	.export		_draw_level_meta
+	.export		_draw_level
+	.export		_center_screen
+	.export		_fetch_palettes
 	.export		_get_controller_input
+	.export		_wait_for_vertical
 
 .segment	"BSS"
 
 _MEM_POINTER:
+	.res	1,$00
+_MEM_POINTER2:
 	.res	1,$00
 
 ; ---------------------------------------------------------------
@@ -28,112 +38,853 @@ _MEM_POINTER:
 
 .proc	_main: near
 
+	.dbg	func, "main", "00", extern, "_main"
+
 .segment	"CODE"
 
-	jsr     _draw
-	lda     #$BF
-	sta     $0040
-L000A:	lda     $0040
-	cmp     #$20
-	beq     L000C
-	ldy     $0040
-	lda     $FC00,y
-	sta     _MEM_POINTER
-	lda     #$3F
+;
+; wait_for_vertical();
+;
+	.dbg	line, "NES.c", 6
+	jsr     _wait_for_vertical
+;
+; fetch_palettes();
+;
+	.dbg	line, "NES.c", 7
+	jsr     _fetch_palettes
+;
+; draw_level_meta();
+;
+	.dbg	line, "NES.c", 8
+	jsr     _draw_level_meta
+;
+; PPU_ADDR = 0x20;
+;
+	.dbg	line, "NES.c", 11
+	lda     #$20
 	sta     $2006
-	lda     $0040
-	sta     $2006
-	lda     _MEM_POINTER
-	sta     $2007
-	inc     $0040
-	jmp     L000A
-L000C:	sta     $2006
+;
+; PPU_ADDR = 0x0;
+;
+	.dbg	line, "NES.c", 12
 	lda     #$00
 	sta     $2006
+;
+; PPU_DATA = 0x0;
+;
+	.dbg	line, "NES.c", 13
 	sta     $2007
+;
+; PPU_MASK = 0x1E;
+;
+	.dbg	line, "NES.c", 16
+	tax
 	lda     #$1E
 	sta     $2001
-L0007:	jsr     _get_controller_input
-	jmp     L0007
+;
+; wait_for_vertical();
+;
+	.dbg	line, "NES.c", 18
+	jsr     _wait_for_vertical
+;
+; wait_for_vertical();
+;
+	.dbg	line, "NES.c", 20
+L0002:	jsr     _wait_for_vertical
+;
+; LOOP3++;
+;
+	.dbg	line, "NES.c", 22
+	inc     $0002
+;
+; if (LOOP3 == 0x01) {
+;
+	.dbg	line, "NES.c", 23
+	ldx     #$00
+	lda     $0002
+	cmp     #$01
+	bne     L0007
+;
+; LOOP3 = 0x0;
+;
+	.dbg	line, "NES.c", 24
+	stx     $0002
+;
+; LOOP2++;
+;
+	.dbg	line, "NES.c", 25
+	inc     $0001
+;
+; PPU_SCROLL_X++;
+;
+	.dbg	line, "NES.c", 26
+	inc     $0020
+;
+; if (LOOP2 == 0xFF) {
+;
+	.dbg	line, "NES.c", 28
+L0007:	lda     $0001
+	cmp     #$FF
+	bne     L0002
+;
+; LOOP2 = 0x0;
+;
+	.dbg	line, "NES.c", 29
+	stx     $0001
+;
+; LOOP4++;
+;
+	.dbg	line, "NES.c", 30
+	lda     $0003
+	inc     $0003
+;
+; while (1) {
+;
+	.dbg	line, "NES.c", 19
+	jmp     L0002
 
+	.dbg	line
 .endproc
 
 ; ---------------------------------------------------------------
-; void __near__ draw (void)
+; void __near__ draw_level_meta (void)
 ; ---------------------------------------------------------------
 
 .segment	"CODE"
 
-.proc	_draw: near
+.proc	_draw_level_meta: near
+
+	.dbg	func, "draw_level_meta", "00", extern, "_draw_level_meta"
 
 .segment	"CODE"
 
+;
+; LOOP1 = 0x0;
+;
+	.dbg	line, "NES.c", 179
 	lda     #$00
+	sta     $0000
+;
+; LOOP2 = 0x0;
+;
+	.dbg	line, "NES.c", 180
+	sta     $0001
+;
+; LOOP4 = 0x0;
+;
+	.dbg	line, "NES.c", 181
+	sta     $0003
+;
+; for (BPS = 0x0; BPS < 0x08; BPS++) {
+;
+	.dbg	line, "NES.c", 182
 	sta     $0040
-L0016:	lda     $0040
-	cmp     #$FF
-	bcs     L0017
+L0011:	lda     $0040
+	cmp     #$08
+	bcs     L0003
+;
+; MEM_POINTER = *((unsigned char*)0xE000 + BPS);
+;
+	.dbg	line, "NES.c", 184
+	ldy     $0040
+	lda     $E000,y
+	sta     _MEM_POINTER
+;
+; LOOP1 = 0x0;
+;
+	.dbg	line, "NES.c", 185
+	lda     #$00
+	sta     $0000
+;
+; LOOP2 = (BPS * 0x2);
+;
+	.dbg	line, "NES.c", 186
+	lda     $0040
+	asl     a
+	sta     $0001
+;
+; for (BPS2 = 0x0; BPS2 < 0x4; BPS2++) {
+;
+	.dbg	line, "NES.c", 188
+	lda     #$00
+	sta     $0042
+L0012:	lda     $0042
+	cmp     #$04
+	bcs     L0014
+;
+; MEM_POINTER_STORE = (MEM_POINTER * 0x4) + BPS2;
+;
+	.dbg	line, "NES.c", 190
+	lda     _MEM_POINTER
+	asl     a
+	asl     a
+	clc
+	adc     $0042
+	sta     $0050
+;
+; MEM_POINTER2 = *((unsigned char*)0xFD00 + MEM_POINTER_STORE);
+;
+	.dbg	line, "NES.c", 191
+	ldy     $0050
+	lda     $FD00,y
+	sta     _MEM_POINTER2
+;
+; LOOP4 = (LOOP2 + BPS2 + LOOP1);
+;
+	.dbg	line, "NES.c", 192
+	lda     $0001
+	clc
+	adc     $0042
+	bcc     L0010
+	clc
+L0010:	adc     $0000
+	sta     $0003
+;
+; PPU_ADDR = 0x20;
+;
+	.dbg	line, "NES.c", 193
+	lda     #$20
+	sta     $2006
+;
+; PPU_ADDR = (0x00 + LOOP4);
+;
+	.dbg	line, "NES.c", 194
+	lda     $0003
+	sta     $2006
+;
+; PPU_DATA = MEM_POINTER2;
+;
+	.dbg	line, "NES.c", 195
+	lda     _MEM_POINTER2
+	sta     $2007
+;
+; if (BPS2 == 0x1) {
+;
+	.dbg	line, "NES.c", 197
+	lda     $0042
+	cmp     #$01
+	bne     L0013
+;
+; LOOP1 = 0x1E;
+;
+	.dbg	line, "NES.c", 198
+	lda     #$1E
+	sta     $0000
+;
+; for (BPS2 = 0x0; BPS2 < 0x4; BPS2++) {
+;
+	.dbg	line, "NES.c", 188
+L0013:	inc     $0042
+	jmp     L0012
+;
+; for (BPS = 0x0; BPS < 0x08; BPS++) {
+;
+	.dbg	line, "NES.c", 182
+L0014:	inc     $0040
+	jmp     L0011
+;
+; }
+;
+	.dbg	line, "NES.c", 203
+L0003:	rts
+
+	.dbg	line
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ draw_level (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_draw_level: near
+
+	.dbg	func, "draw_level", "00", extern, "_draw_level"
+
+.segment	"CODE"
+
+;
+; PPU_MASK = 0x0;
+;
+	.dbg	line, "NES.c", 93
+	lda     #$00
+	sta     $2001
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 94
+	sta     $0040
+L0032:	lda     $0042
+	cmp     #$01
+	beq     L0034
+;
+; MEM_POINTER = *((unsigned char*)0xEFF0 + BPS);
+;
+	.dbg	line, "NES.c", 95
 	ldy     $0040
 	lda     $EFF0,y
 	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x20;
+;
+	.dbg	line, "NES.c", 96
 	lda     #$20
 	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 97
 	lda     $0040
 	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 98
 	lda     _MEM_POINTER
 	sta     $2007
-	inc     $0040
-	jmp     L0016
-L0017:	lda     #$00
-	sta     $0040
-L0018:	lda     $0040
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 99
+	lda     $0040
 	cmp     #$FF
-	bcs     L0019
+	bne     L0033
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 100
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 94
+L0033:	inc     $0040
+	jmp     L0032
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 103
+L0034:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 104
+	sta     $0040
+L0035:	lda     $0042
+	cmp     #$01
+	beq     L0037
+;
+; MEM_POINTER = *((unsigned char*)0xF0F0 + BPS);
+;
+	.dbg	line, "NES.c", 105
 	ldy     $0040
 	lda     $F0F0,y
 	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x21;
+;
+	.dbg	line, "NES.c", 106
 	lda     #$21
 	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 107
 	lda     $0040
 	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 108
 	lda     _MEM_POINTER
 	sta     $2007
-	inc     $0040
-	jmp     L0018
-L0019:	lda     #$00
-	sta     $0040
-L001A:	lda     $0040
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 109
+	lda     $0040
 	cmp     #$FF
-	bcs     L001B
+	bne     L0036
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 110
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 104
+L0036:	inc     $0040
+	jmp     L0035
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 113
+L0037:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 114
+	sta     $0040
+L0038:	lda     $0042
+	cmp     #$01
+	beq     L003A
+;
+; MEM_POINTER = *((unsigned char*)0xF1F0 + BPS);
+;
+	.dbg	line, "NES.c", 115
 	ldy     $0040
 	lda     $F1F0,y
 	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x22;
+;
+	.dbg	line, "NES.c", 116
 	lda     #$22
 	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 117
 	lda     $0040
 	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 118
 	lda     _MEM_POINTER
 	sta     $2007
-	inc     $0040
-	jmp     L001A
-L001B:	lda     #$00
-	sta     $0040
-L001C:	lda     $0040
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 119
+	lda     $0040
 	cmp     #$FF
-	bcs     L0012
+	bne     L0039
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 120
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 114
+L0039:	inc     $0040
+	jmp     L0038
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 123
+L003A:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 124
+	sta     $0040
+L003B:	lda     $0042
+	cmp     #$01
+	beq     L003D
+;
+; MEM_POINTER = *((unsigned char*)0xF2F0 + BPS);
+;
+	.dbg	line, "NES.c", 125
 	ldy     $0040
 	lda     $F2F0,y
 	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x23;
+;
+	.dbg	line, "NES.c", 126
 	lda     #$23
 	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 127
 	lda     $0040
 	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 128
 	lda     _MEM_POINTER
 	sta     $2007
-	inc     $0040
-	jmp     L001C
-L0012:	rts
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 129
+	lda     $0040
+	cmp     #$FF
+	bne     L003C
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 130
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 124
+L003C:	inc     $0040
+	jmp     L003B
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 134
+L003D:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 135
+	sta     $0040
+L003E:	lda     $0042
+	cmp     #$01
+	beq     L0040
+;
+; MEM_POINTER = *((unsigned char*)0xF3F0 + BPS);
+;
+	.dbg	line, "NES.c", 136
+	ldy     $0040
+	lda     $F3F0,y
+	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x24;
+;
+	.dbg	line, "NES.c", 137
+	lda     #$24
+	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 138
+	lda     $0040
+	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 139
+	lda     _MEM_POINTER
+	sta     $2007
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 140
+	lda     $0040
+	cmp     #$FF
+	bne     L003F
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 141
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 135
+L003F:	inc     $0040
+	jmp     L003E
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 144
+L0040:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 145
+	sta     $0040
+L0041:	lda     $0042
+	cmp     #$01
+	beq     L0043
+;
+; MEM_POINTER = *((unsigned char*)0xF4F0 + BPS);
+;
+	.dbg	line, "NES.c", 146
+	ldy     $0040
+	lda     $F4F0,y
+	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x25;
+;
+	.dbg	line, "NES.c", 147
+	lda     #$25
+	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 148
+	lda     $0040
+	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 149
+	lda     _MEM_POINTER
+	sta     $2007
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 150
+	lda     $0040
+	cmp     #$FF
+	bne     L0042
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 151
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 145
+L0042:	inc     $0040
+	jmp     L0041
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 154
+L0043:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 155
+	sta     $0040
+L0044:	lda     $0042
+	cmp     #$01
+	beq     L0046
+;
+; MEM_POINTER = *((unsigned char*)0xF5F0 + BPS);
+;
+	.dbg	line, "NES.c", 156
+	ldy     $0040
+	lda     $F5F0,y
+	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x26;
+;
+	.dbg	line, "NES.c", 157
+	lda     #$26
+	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 158
+	lda     $0040
+	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 159
+	lda     _MEM_POINTER
+	sta     $2007
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 160
+	lda     $0040
+	cmp     #$FF
+	bne     L0045
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 161
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 155
+L0045:	inc     $0040
+	jmp     L0044
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 164
+L0046:	lda     #$00
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 165
+	sta     $0040
+L0047:	lda     $0042
+	cmp     #$01
+	beq     L0049
+;
+; MEM_POINTER = *((unsigned char*)0xF6F0 + BPS);
+;
+	.dbg	line, "NES.c", 166
+	ldy     $0040
+	lda     $F6F0,y
+	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x27;
+;
+	.dbg	line, "NES.c", 167
+	lda     #$27
+	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 168
+	lda     $0040
+	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 169
+	lda     _MEM_POINTER
+	sta     $2007
+;
+; if (BPS == 0xFF) {
+;
+	.dbg	line, "NES.c", 170
+	lda     $0040
+	cmp     #$FF
+	bne     L0048
+;
+; BPS2 = 0x1;
+;
+	.dbg	line, "NES.c", 171
+	lda     #$01
+	sta     $0042
+;
+; for (BPS = 0x0; BPS2 != 0x1; BPS++) {
+;
+	.dbg	line, "NES.c", 165
+L0048:	inc     $0040
+	jmp     L0047
+;
+; BPS2 = 0x0;
+;
+	.dbg	line, "NES.c", 174
+L0049:	lda     #$00
+	sta     $0042
+;
+; PPU_MASK = 0x1E;
+;
+	.dbg	line, "NES.c", 175
+	lda     #$1E
+	sta     $2001
+;
+; }
+;
+	.dbg	line, "NES.c", 176
+	rts
 
+	.dbg	line
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ center_screen (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_center_screen: near
+
+	.dbg	func, "center_screen", "00", extern, "_center_screen"
+
+.segment	"CODE"
+
+;
+; PPU_ADDR = 0x20;
+;
+	.dbg	line, "NES.c", 206
+	lda     #$20
+	sta     $2006
+;
+; PPU_ADDR = 0x00;
+;
+	.dbg	line, "NES.c", 207
+	lda     #$00
+	sta     $2006
+;
+; PPU_DATA = 0x00;
+;
+	.dbg	line, "NES.c", 208
+	sta     $2007
+;
+; }
+;
+	.dbg	line, "NES.c", 209
+	rts
+
+	.dbg	line
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ fetch_palettes (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_fetch_palettes: near
+
+	.dbg	func, "fetch_palettes", "00", extern, "_fetch_palettes"
+
+.segment	"CODE"
+
+;
+; for (BPS = 0x0; BPS != 0x20; BPS++) {
+;
+	.dbg	line, "NES.c", 226
+	lda     #$00
+	sta     $0040
+L0007:	lda     $0040
+	cmp     #$20
+	beq     L0003
+;
+; MEM_POINTER = *((unsigned char*)0xFC00 + BPS);
+;
+	.dbg	line, "NES.c", 227
+	ldy     $0040
+	lda     $FC00,y
+	sta     _MEM_POINTER
+;
+; PPU_ADDR = 0x3F;
+;
+	.dbg	line, "NES.c", 228
+	lda     #$3F
+	sta     $2006
+;
+; PPU_ADDR = BPS;
+;
+	.dbg	line, "NES.c", 229
+	lda     $0040
+	sta     $2006
+;
+; PPU_DATA = MEM_POINTER;
+;
+	.dbg	line, "NES.c", 230
+	lda     _MEM_POINTER
+	sta     $2007
+;
+; for (BPS = 0x0; BPS != 0x20; BPS++) {
+;
+	.dbg	line, "NES.c", 226
+	inc     $0040
+	jmp     L0007
+;
+; }
+;
+	.dbg	line, "NES.c", 232
+L0003:	rts
+
+	.dbg	line
 .endproc
 
 ; ---------------------------------------------------------------
@@ -144,28 +895,222 @@ L0012:	rts
 
 .proc	_get_controller_input: near
 
+	.dbg	func, "get_controller_input", "00", extern, "_get_controller_input"
+
 .segment	"CODE"
 
+;
+; CTRL1 = 0x01;
+;
+	.dbg	line, "NES.c", 235
 	lda     #$01
 	sta     $4016
+;
+; CTRL1 = 0x00;
+;
+	.dbg	line, "NES.c", 236
 	lda     #$00
 	sta     $4016
+;
+; for (LOOP1 = 0; LOOP1 != 8; LOOP1++) {
+;
+	.dbg	line, "NES.c", 237
 	sta     $0000
-L0006:	lda     $0000
+L0016:	lda     $0000
 	cmp     #$08
-	beq     L0003
+	beq     L0017
+;
+; CTRL_STORE_BUFFER = (CTRL1 & 0x1);  // Saves the first bit of CTRL1
+;
+	.dbg	line, "NES.c", 238
 	lda     $4016
 	and     #$01
 	sta     $0030
+;
+; CTRL_STORE = (CTRL_STORE << 1);  // Shifts all the bits of CTRL_STORE once
+;
+	.dbg	line, "NES.c", 239
 	lda     $0031
 	asl     a
 	sta     $0031
+;
+; CTRL_STORE = CTRL_STORE | CTRL_STORE_BUFFER;  // Apply the bytes from CTRL_STORE with CTRL_STORE_BUFFER
+;
+	.dbg	line, "NES.c", 240
 	lda     $0030
 	ora     $0031
 	sta     $0031
+;
+; for (LOOP1 = 0; LOOP1 != 8; LOOP1++) {
+;
+	.dbg	line, "NES.c", 237
 	inc     $0000
-	jmp     L0006
+	jmp     L0016
+;
+; CTRL_OUTPUT = CTRL_STORE;
+;
+	.dbg	line, "NES.c", 242
+L0017:	lda     $0031
+	sta     $0032
+;
+; if (CTRL_OUTPUT == 0x1) {
+;
+	.dbg	line, "NES.c", 244
+	cmp     #$01
+	bne     L0018
+;
+; if (CTRL_OUTPUT != LOOP4) {
+;
+	.dbg	line, "NES.c", 245
+	lda     $0032
+	cmp     $0003
+	beq     L0014
+;
+; SPRITE_X++;
+;
+	.dbg	line, "NES.c", 246
+	inc     $6013
+;
+; else if (CTRL_OUTPUT == 0x2) {
+;
+	.dbg	line, "NES.c", 251
+	jmp     L001C
+L0018:	lda     $0032
+	cmp     #$02
+	bne     L0019
+;
+; if (CTRL_OUTPUT != LOOP4) {
+;
+	.dbg	line, "NES.c", 252
+	cmp     $0003
+	beq     L0014
+;
+; SPRITE_X = SPRITE_X - 0x1;
+;
+	.dbg	line, "NES.c", 253
+	lda     $6013
+	sec
+	sbc     #$01
+	sta     $6013
+;
+; else if (CTRL_OUTPUT == 0x4) {
+;
+	.dbg	line, "NES.c", 258
+	jmp     L001C
+L0019:	lda     $0032
+	cmp     #$04
+	bne     L001A
+;
+; if (CTRL_OUTPUT != LOOP4) {
+;
+	.dbg	line, "NES.c", 259
+	cmp     $0003
+	beq     L0014
+;
+; SPRITE_Y++;
+;
+	.dbg	line, "NES.c", 260
+	inc     $6010
+;
+; else if (CTRL_OUTPUT == 0x8) {
+;
+	.dbg	line, "NES.c", 265
+	jmp     L001C
+L001A:	lda     $0032
+	cmp     #$08
+	bne     L001B
+;
+; if (CTRL_OUTPUT != LOOP4) {
+;
+	.dbg	line, "NES.c", 266
+	cmp     $0003
+	beq     L0014
+;
+; SPRITE_Y = SPRITE_Y - 0x1;
+;
+	.dbg	line, "NES.c", 267
+	lda     $6010
+	sec
+	sbc     #$01
+	sta     $6010
+;
+; else if (CTRL_OUTPUT == 0x0) {
+;
+	.dbg	line, "NES.c", 272
+	jmp     L001C
+L001B:	lda     $0032
+	bne     L0014
+;
+; LOOP4 = CTRL_OUTPUT;
+;
+	.dbg	line, "NES.c", 273
+L001C:	lda     $0032
+	sta     $0003
+;
+; }
+;
+	.dbg	line, "NES.c", 275
+L0014:	rts
+
+	.dbg	line
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ wait_for_vertical (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_wait_for_vertical: near
+
+	.dbg	func, "wait_for_vertical", "00", extern, "_wait_for_vertical"
+
+.segment	"CODE"
+
+;
+; PPU_VSYNC = PPU_STATUS;
+;
+	.dbg	line, "NES.c", 278
+	lda     $2002
+	sta     $0022
+;
+; if (PPU_VSYNC >= 0x80) {
+;
+	.dbg	line, "NES.c", 279
+	cmp     #$80
+;
+; else {
+;
+	.dbg	line, "NES.c", 305
+	bcs     L0003
+;
+; LOOP1++;
+;
+	.dbg	line, "NES.c", 306
+	inc     $0000
+;
+; if (LOOP1 == 0xFF) {
+;
+	.dbg	line, "NES.c", 307
+	lda     $0000
+	cmp     #$FF
+	bne     L0004
+;
+; LOOP5++;
+;
+	.dbg	line, "NES.c", 308
+	inc     $0004
+;
+; wait_for_vertical();
+;
+	.dbg	line, "NES.c", 310
+L0004:	jmp     _wait_for_vertical
+;
+; }
+;
+	.dbg	line, "NES.c", 312
 L0003:	rts
 
+	.dbg	line
 .endproc
 
