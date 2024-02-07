@@ -2,8 +2,8 @@
 
 The game is currently in development. There will be bugs present in the game. *There is no gameplay at the moment*.
 
-## NES Cruelty Squad Demake
- Demaking Cruelty Squad on the NES
+## NES ROM Development
+Currently learning how to develop for the Nintendo Entertainment System, and learning assembly for the 6502 processor.
 
 ## Software used
 
