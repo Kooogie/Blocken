@@ -11,20 +11,25 @@
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 	.macpack	longbranch
 	.export		_PALETTES
+	.export		_SHIFTING_PAL
+	.export		_LEVEL
 	.export		_IRAM
-	.export		_OTHERRAM
+	.export		_UNUSED
 	.export		_WRAM
 	.export		___MAIN__
+	.export		_WAIT_FOR_VSYNC
+	.export		_FETCH_PALETTES
+	.export		_SHIFT_PALETTES
 
 .segment	"DATA"
 
 .segment	"IRAM": zeropage
-.segment	"OTHERRAM": absolute
-.segment	"WRAM": absolute
+.segment	"UNUSED"
+.segment	"WRAM"
 _IRAM:
-	.res	8192,$00
-_OTHERRAM:
-	.res	16384,$00
+	.res	2048,$00
+_UNUSED:
+	.res	22527,$00
 _WRAM:
 	.res	8192,$00
 
@@ -47,11 +52,21 @@ _PALETTES:
 	.byte	$2A
 	.byte	$1A
 	.byte	$0A
-
-.segment	"BSS"
-
-_TEST:
-	.res	2,$00
+_SHIFTING_PAL:
+	.byte	$30
+	.byte	$3D
+	.byte	$2D
+	.byte	$1D
+	.byte	$1D
+	.byte	$2D
+	.byte	$3D
+	.byte	$30
+_LEVEL:
+	.byte	$01
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$01
 
 ; ---------------------------------------------------------------
 ; void __near__ __MAIN__ (void)
@@ -63,70 +78,120 @@ _TEST:
 
 .segment	"CODE"
 
-;
-; IRAM[0x26] = 0x01;
-;
+	jsr     _WAIT_FOR_VSYNC
+	jsr     _FETCH_PALETTES
+	lda     #$18
+	sta     $2001
+	lda     #$20
+	sta     $2006
+	sta     $2006
+	ldx     #$00
 	lda     #$01
-	sta     _IRAM+38
-;
-; IRAM[0x25] = 0x02;
-;
-	lda     #$02
-	sta     _IRAM+37
-;
-; BYTE1 = 0x21;
-;
-	lda     #$21
-	sta     $0001
-;
-; BYTE2 = 0x1E;
-;
-	lda     #$1E
-	sta     $0002
-;
-; for (BYTE0 = 0x0; BYTE0 < 0x10; ++BYTE0) {
-;
+	sta     $2007
+L0002:	jsr     _WAIT_FOR_VSYNC
+	inc     _IRAM
+	lda     _IRAM
+	cmp     #$21
 	lda     #$00
-	sta     $0000
-L0011:	lda     $0000
+	tax
+	rol     a
+	beq     L0002
+	jsr     _SHIFT_PALETTES
+	jmp     L0002
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ WAIT_FOR_VSYNC (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_WAIT_FOR_VSYNC: near
+
+.segment	"CODE"
+
+	lda     $2002
+	sta     _IRAM+1
+	cmp     #$80
+	bcs     L0003
+	jmp     _WAIT_FOR_VSYNC
+L0003:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ FETCH_PALETTES (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_FETCH_PALETTES: near
+
+.segment	"CODE"
+
+	lda     #$00
+	sta     _IRAM+1
+L0007:	lda     _IRAM+1
 	cmp     #$10
-L0015:	bcs     L0015
-;
-; ++BYTE1;
-;
-	inc     $0001
-;
-; ++BYTE2;
-;
-	inc     $0002
-;
-; if (IRAM[BYTE1] == 0x01 || IRAM[BYTE2] == 0x01) {
-;
-	ldy     $0001
-	lda     _IRAM,y
-	cmp     #$01
-	beq     L0013
-	ldy     $0002
-	lda     _IRAM,y
-	cmp     #$01
-	bne     L0014
-;
-; if (IRAM[BYTE0] == 0x2) {
-;
-L0013:	ldy     $0000
-	lda     _IRAM,y
-	cmp     #$02
-	bne     L0014
-;
-; IRAM[0x30] = 0xFF;
-;
-	lda     #$FF
-	sta     _IRAM+48
-;
-; for (BYTE0 = 0x0; BYTE0 < 0x10; ++BYTE0) {
-;
-L0014:	inc     $0000
-	jmp     L0011
+	bcs     L0003
+	lda     #$3F
+	sta     $2006
+	lda     _IRAM+1
+	sta     $2006
+	ldy     _IRAM+1
+	lda     _PALETTES,y
+	sta     $2007
+	inc     _IRAM+1
+	jmp     L0007
+L0003:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ SHIFT_PALETTES (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_SHIFT_PALETTES: near
+
+.segment	"CODE"
+
+	lda     #$00
+	sta     _IRAM
+L000C:	lda     _IRAM
+	cmp     #$04
+	bcs     L000D
+	lda     #$3F
+	sta     $2006
+	lda     _IRAM+1
+	sta     $2006
+	ldy     _IRAM+2
+	lda     _SHIFTING_PAL,y
+	sta     $2007
+	inc     _IRAM+1
+	inc     _IRAM+2
+	inc     _IRAM
+	jmp     L000C
+L000D:	lda     #$00
+	sta     _IRAM+1
+	lda     #$02
+	sta     _IRAM
+	lda     #$00
+	sta     _IRAM
+L000E:	lda     _IRAM
+	cmp     #$04
+	bcc     L000F
+	dec     _IRAM+2
+	inc     _IRAM
+	jmp     L000E
+L000F:	lda     _IRAM+2
+	cmp     #$0A
+	bcc     L000B
+	lda     #$00
+	sta     _IRAM+2
+L000B:	rts
 
 .endproc
 
