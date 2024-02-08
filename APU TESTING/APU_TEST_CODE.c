@@ -52,7 +52,7 @@ void SHIFT_PALETTES() {
 	}
 	IRAM[1] = 0x0;
 	IRAM[0] = 0x2;
-	for (IRAM[0] = 0x0; IRAM[0] > 0x3; ++IRAM[0]) {
+	for (IRAM[0] = 0x0; IRAM[0] > 0x2; ++IRAM[0]) {
 		--IRAM[2];
 	}
 	if (IRAM[2] > 0x9) {

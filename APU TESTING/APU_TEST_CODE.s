@@ -181,7 +181,7 @@ L000D:	lda     #$00
 	lda     #$00
 	sta     _IRAM
 L000E:	lda     _IRAM
-	cmp     #$04
+	cmp     #$03
 	bcc     L000F
 	dec     _IRAM+2
 	inc     _IRAM
