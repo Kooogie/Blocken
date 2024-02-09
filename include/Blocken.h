@@ -8,17 +8,14 @@
 #define LOOP4				(*(volatile unsigned char*)0x03)
 #define LOOP5				(*(volatile unsigned char*)0x04)
 #define LOOP6				(*(volatile unsigned char*)0x05)
-#define LOOP_LEAST 			(*(volatile unsigned char*)0x06)
-#define LOOP_MOST			(*(volatile unsigned char*)0x07)
-#define LOOP_LEAST_COMPARE	(*(volatile unsigned char*)0x08)
-#define LOOP_MOST_COMPARE	(*(volatile unsigned char*)0x09)
-#define TEMP_LOOP			(*(volatile unsigned char*)0x0A)
-#define TEMP_FORLOOP_COUNTER	(*(volatile unsigned char*)0x0B)
-
-#define LOOP2_FLAG		(*(volatile unsigned char*)0x0B)
-#define ACC				(*(volatile unsigned char*)0x0C)
-#define LOOP2_FLAG2		(*(volatile unsigned char*)0x0D)
-#define ACC2			(*(volatile unsigned char*)0x0E)
+#define LOOP7				(*(volatile unsigned char*)0x06)
+#define LOOP8				(*(volatile unsigned char*)0x07)
+#define LOOP9				(*(volatile unsigned char*)0x08)
+#define LOOP10				(*(volatile unsigned char*)0x09)
+#define LOOP_LEAST 			(*(volatile unsigned char*)0x0C)
+#define LOOP_MOST			(*(volatile unsigned char*)0x0D)
+#define LOOP_LEAST_COMPARE	(*(volatile unsigned char*)0x0E)
+#define LOOP_MOST_COMPARE	(*(volatile unsigned char*)0x0F)
 
 #define PPU_SCROLL_X		(*(volatile unsigned char*)0x20)
 #define PPU_SCROLL_Y		(*(volatile unsigned char*)0x21)
@@ -39,16 +36,14 @@
 
 #define MEM_POINTER_STORE (*(volatile unsigned char*)0x50)
 
-#define SPRITE_Y	(*(volatile unsigned char*)0x6010)
-#define SPRITE		(*(volatile unsigned char*)0x6011)
-#define SPRITE_PAL	(*(volatile unsigned char*)0x6012)
-#define SPRITE_X	(*(volatile unsigned char*)0x6013)
-#define SPRITE_Y2	(*(volatile unsigned char*)0x6014)
-#define SPRITE2		(*(volatile unsigned char*)0x6015)
-#define SPRITE_PAL2	(*(volatile unsigned char*)0x6016)
-#define SPRITE_X2	(*(volatile unsigned char*)0x6017)
+#define CHARACTER_Y		(*(volatile unsigned char*)0x60)
+#define CHARACTER_TILE	(*(volatile unsigned char*)0x61)
+#define CHARACTER_PAL	(*(volatile unsigned char*)0x62)
+#define CHRACTER_X		(*(volatile unsigned char*)0x63)
 
-// CPU CUSTOM POINTERS MEMORY USED: 0.034KBs
+#define DEVELOPER_BYTE (*(volatile unsigned char*)0xFF)
+
+// CPU CUSTOM POINTERS MEMORY USED: 0.037KBs
 
 
 
@@ -87,7 +82,6 @@
 	//PPU MEMORY DUMP		$F010 - $F3AF | $944 Bytes
 	//PPU PAL MEMORY DUMP	$F3B0 - $F3EF | $64 Bytes
 	//PAL ROM				$FC00 - $FC1F | $15 Bytes
-	//???					$FD00 - $FD03 | $4 Bytes
 	//METATABLES			$FD00 - $FDFF | $255 Bytes
 	
 /*
@@ -95,13 +89,14 @@
 TOTAL NES ROM MEMORY:		40.984KBs
 
 LIST OF USED MEMORY--
-	CURRENT INSTRUCTIONS MEMORY USED: 	0.924KBs
-	CURRENT CUSTOM MEMORY USED: 		1.027KBs
-	CURRENT SPRITE MEMORY USED:			1.152KBs	
+    CURRENT CUSTOM MEMORY ADDRESSES:	0.037KBs
+	CURRENT INSTRUCTIONS MEMORY USED: 	0.645KBs
+	CURRENT CUSTOM MEMORY USED: 		0.797KBs
+	CURRENT SPRITE MEMORY USED:			1.184KBs	
 
 MEMORY ADDED UP--
-	TOTAL MEMORY USED: 3.103KBs
-	LEFT OVER MEMORY: 37.881KBs
+	TOTAL MEMORY USED: 2.663KBs %15.3
+	LEFT OVER MEMORY: 39.337KBs
 	
 */
 
@@ -121,21 +116,21 @@ unsigned char MEM_POINTER2;
 
 void main();
 
-void store_level();
-
 void draw_level_meta();
 
-void draw_level();
-
 void center_screen();
-
-void fetch_sprites();
 
 void fetch_palettes();
 
 void get_controller_input();
 
 void wait_for_vertical();
+
+void clear_memory();
+
+void show_loop1();
+
+void show_loop2();
 
 /* UNUSED FUNCTIONS
 void water_sprites(void);

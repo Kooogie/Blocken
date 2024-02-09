@@ -65,6 +65,9 @@ unsigned char getcpu (void);
 /* Macros for CPU instructions */
 #define BRK()   __asm__ ("brk")
 #define CLI()   __asm__ ("cli")
+#define CLC()   __asm__ ("clc")
+#define CLD()   __asm__ ("cld")
+#define CLV()   __asm__ ("CLV")
 #define SEI()   __asm__ ("sei")
 
 
