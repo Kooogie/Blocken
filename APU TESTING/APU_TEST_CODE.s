@@ -11,8 +11,7 @@
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 	.macpack	longbranch
 	.export		_PALETTES
-	.export		_SHIFTING_PAL
-	.export		_LEVEL
+	.export		_GOLD_PAL
 	.export		_IRAM
 	.export		_UNUSED
 	.export		_WRAM
@@ -52,21 +51,11 @@ _PALETTES:
 	.byte	$2A
 	.byte	$1A
 	.byte	$0A
-_SHIFTING_PAL:
-	.byte	$30
-	.byte	$3D
-	.byte	$2D
-	.byte	$1D
-	.byte	$1D
-	.byte	$2D
-	.byte	$3D
-	.byte	$30
-_LEVEL:
-	.byte	$01
-	.byte	$00
-	.byte	$01
-	.byte	$00
-	.byte	$01
+_GOLD_PAL:
+	.byte	$38
+	.byte	$28
+	.byte	$18
+	.byte	$08
 
 ; ---------------------------------------------------------------
 ; void __near__ __MAIN__ (void)
@@ -91,11 +80,13 @@ _LEVEL:
 L0002:	jsr     _WAIT_FOR_VSYNC
 	inc     _IRAM
 	lda     _IRAM
-	cmp     #$21
+	cmp     #$3B
 	lda     #$00
 	tax
 	rol     a
 	beq     L0002
+	txa
+	sta     _IRAM
 	jsr     _SHIFT_PALETTES
 	jmp     L0002
 
@@ -158,40 +149,27 @@ L0003:	rts
 
 .segment	"CODE"
 
-	lda     #$00
-	sta     _IRAM
-L000C:	lda     _IRAM
-	cmp     #$04
-	bcs     L000D
+	lda     _IRAM+3
+	bne     L0005
 	lda     #$3F
 	sta     $2006
-	lda     _IRAM+1
+	lda     #$00
 	sta     $2006
-	ldy     _IRAM+2
-	lda     _SHIFTING_PAL,y
+	lda     _GOLD_PAL
 	sta     $2007
-	inc     _IRAM+1
-	inc     _IRAM+2
-	inc     _IRAM
-	jmp     L000C
-L000D:	lda     #$00
-	sta     _IRAM+1
-	lda     #$02
-	sta     _IRAM
+	inc     _IRAM+3
+	rts
+L0005:	lda     _IRAM+3
+	cmp     #$01
+	bne     L0003
+	lda     #$3F
+	sta     $2006
 	lda     #$00
-	sta     _IRAM
-L000E:	lda     _IRAM
-	cmp     #$03
-	bcc     L000F
-	dec     _IRAM+2
-	inc     _IRAM
-	jmp     L000E
-L000F:	lda     _IRAM+2
-	cmp     #$0A
-	bcc     L000B
-	lda     #$00
-	sta     _IRAM+2
-L000B:	rts
+	sta     $2006
+	lda     _PALETTES
+	sta     $2007
+	dec     _IRAM+3
+L0003:	rts
 
 .endproc
 
