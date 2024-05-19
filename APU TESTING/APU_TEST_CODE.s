@@ -88,6 +88,9 @@ L0002:	jsr     _WAIT_FOR_VSYNC
 	txa
 	sta     _IRAM
 	jsr     _SHIFT_PALETTES
+	ldx     #$00
+	inc     _IRAM+10
+	lda     _IRAM+10
 	jmp     L0002
 
 .endproc
@@ -149,26 +152,19 @@ L0003:	rts
 
 .segment	"CODE"
 
-	lda     _IRAM+3
-	bne     L0005
 	lda     #$3F
 	sta     $2006
 	lda     #$00
 	sta     $2006
-	lda     _GOLD_PAL
+	ldy     _IRAM+10
+	lda     _GOLD_PAL,y
 	sta     $2007
 	inc     _IRAM+3
-	rts
-L0005:	lda     _IRAM+3
-	cmp     #$01
-	bne     L0003
-	lda     #$3F
-	sta     $2006
+	lda     _IRAM+10
+	cmp     #$04
+	bcc     L0003
 	lda     #$00
-	sta     $2006
-	lda     _PALETTES
-	sta     $2007
-	dec     _IRAM+3
+	sta     _IRAM+10
 L0003:	rts
 
 .endproc

@@ -55,6 +55,13 @@ PPU_MASK Bits
 
 */
 
+const unsigned char PLAYERDATA[] = {
+	0x20,	// Y
+	0x0,	// SPRITE
+	0x0,	// PAL
+	0x20	// X
+};
+
 const unsigned char PALETTES[] = {
 	0x30,0x3D,0x2D,0x1D,
 	0x31,0x21,0x11,0x01,
@@ -71,7 +78,51 @@ unsigned char UNUSED[0x57FF] 	= {};
 unsigned char WRAM[0x2000] 		= {}; //(WORK RAM)
 
 void __MAIN__();
+
+void INIT();
 void WAIT_FOR_VSYNC();
 void FETCH_PALETTES();
-
 void SHIFT_PALETTES();
+void UPDATE_PLAYER_LOCATION();
+void GET_CONTROLLER_INPUT();
+
+void INIT() {
+		WAIT_FOR_VSYNC();
+		FETCH_PALETTES();
+}
+
+void WAIT_FOR_VSYNC() {
+	IRAM[1] = PPU_STATUS;
+	if (IRAM[1] >= 0x80) {
+		// Break out of loop!
+	}
+	else {
+		WAIT_FOR_VSYNC();
+	}
+}
+
+void FETCH_PALETTES() {
+	for (IRAM[1]=0x0; IRAM[1] < 0x10; ++IRAM[1]) {
+		PPU_ADDR = 0x3F;
+		PPU_ADDR = IRAM[1];
+		PPU_DATA = PALETTES[IRAM[1]];
+	}
+}
+
+void SHIFT_PALETTES() {
+	PPU_ADDR = 0x3F;
+	PPU_ADDR = 0x0;
+	PPU_DATA = GOLD_PAL[IRAM[0xA]];
+	++IRAM[3];
+	if (IRAM[0xA] > 3) {
+		IRAM[0xA] = 0;
+	}
+}
+
+void UPDATE_PLAYER_LOCATION() {
+	
+}
+
+void GET_CONTROLLER_INPUT () {
+	IRAM[0x10] = CTRL1;
+}
